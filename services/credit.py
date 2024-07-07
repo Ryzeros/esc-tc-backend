@@ -53,7 +53,8 @@ class CreditCRUD(AppCRUD):
                            email=item.email,
                            airline_code=item.airline_code,
                            partner_code=item.partner_code,
-                           status="In Progress")
+                           status="In Progress",
+                           additional_info=item.additional_info)
         for _ in range(5):
             item.reference = generate_reference()
             self.db.add(item)

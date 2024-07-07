@@ -1,5 +1,6 @@
 from config.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, Uuid
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class CreditModel(Base):
@@ -10,12 +11,13 @@ class CreditModel(Base):
     first_name = Column(String)
     last_name = Column(String)
     email = Column(String)
+    phone_number = Column()
     reference = Column(Uuid, unique=True)
     airline_code = Column(String)
     partner_code = Column(String)
     transaction_date = Column(DateTime)
     amount = Column(Integer)
-    monthly_spending = Column(Integer)
+    additional_info = Column(JSONB, nullable=True, default={})
     
     status = Column(String)
 
