@@ -6,13 +6,14 @@ from utils.app_exceptions import AppException
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from utils.validators import validate_email, validate_password
+from utils.misc import hash_password, check_password
 
 
 class UserService(AppService):
 
     # FOR DEBUGGING!!! REMOVE BEFORE PROD
     def get_users(self) -> ServiceResult:
-        item = UserCRUD(self.db).get_items()
+        item = UserCRUD(self.db).get_users()
         if not item:
             return ServiceResult(AppException.GetItem({"error": "Nothing in DB"}))
         return ServiceResult(item)
@@ -33,6 +34,12 @@ class UserService(AppService):
         if not item:
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
+    
+    def auth_user(self, item: UserCreate) -> ServiceResult:
+        item = UserCRUD(self.db).auth_user(item.username, item.password)
+        if not item:
+            return ServiceResult(AppException.GetItem({"Error": "Invalid password or user"}))
+        return ServiceResult(item)
 
 
 class UserCRUD(AppCRUD):
@@ -49,15 +56,22 @@ class UserCRUD(AppCRUD):
         if item:
             return item
         return None
+    
+    def auth_user(self, username: str, password: str) -> UserModel:
+        item = self.db.query(UserModel).filter(UserModel.username == username).first()
+        if check_password(password, item.password):
+            return item
+        return None
 
     def add_user(self, item: UserCreate) -> UserModel:
         item = UserModel(first_name=item.first_name,
                            last_name=item.last_name,
                            email=item.email,
                            username=item.username,
-                           password=item.password,
+                           password=hash_password(item.password),
                            verified=0,
                            created_at=datetime.now())
+        self.db.add(item)
         try:
                 self.db.commit()
                 self.db.refresh(item)

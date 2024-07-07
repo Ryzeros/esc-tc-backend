@@ -18,6 +18,3 @@ class UserModel(Base):
         UniqueConstraint('email', name='uix_email'),
         UniqueConstraint('username', name='uix_username'),
     )
-
-
-    
