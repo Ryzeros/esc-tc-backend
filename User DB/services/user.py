@@ -1,5 +1,7 @@
 from models.user import UserModel
 from schemas.user import UserCreate
+from models.card import CardModel
+from schemas.card import CardBase, CardTC, CardAdd
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -34,6 +36,12 @@ class UserService(AppService):
         if not item:
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
+
+    def add_card(self, item: CardAdd) -> ServiceResult:
+        item = UserCRUD(self.db).add_card(item)
+        if not item:
+            return ServiceResult(AppException.AddItem())
+        return ServiceResult(item)
     
     def auth_user(self, item: UserCreate) -> ServiceResult:
         item = UserCRUD(self.db).auth_user(item.username, item.password)
@@ -62,6 +70,21 @@ class UserCRUD(AppCRUD):
         if check_password(password, item.password):
             return item
         return None
+
+    def add_card(self, item: CardAdd) -> CardModel:
+        item = CardModel(owned_by=item.owned_by,
+                            card_name=item.card_name,
+                            monthly_spending=item.monthly_spending,
+                            first_time_use=1,
+                            created_at=datetime.now())
+        self.db.add(item)
+        try:
+                self.db.commit()
+                self.db.refresh(item)
+                return item
+        except IntegrityError:
+                self.db.rollback()
+                return None
 
     def add_user(self, item: UserCreate) -> UserModel:
         item = UserModel(first_name=item.first_name,

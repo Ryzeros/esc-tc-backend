@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv("./.env")
 
 USERNAME = os.getenv("USERNAME").lower()
 PASSWORD = os.getenv("PASSWORD")
