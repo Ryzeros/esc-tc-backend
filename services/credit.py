@@ -30,10 +30,22 @@ class CreditService(AppService):
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
 
+    def get_items_by_email(self, email: str) -> ServiceResult:
+        item = CreditCRUD(self.db).get_items_by_email(email)
+        if not item:
+            return ServiceResult(AppException.GetItem({"email": email}))
+        return ServiceResult(item)
+
 
 class CreditCRUD(AppCRUD):
     def get_items(self, member_id: str) -> CreditModel:
         item = self.db.query(CreditModel).filter(CreditModel.member_id == member_id).all()
+        if item:
+            return item
+        return None
+
+    def get_items_by_email(self, email: str) -> CreditModel:
+        item = self.db.query(CreditModel).filter(CreditModel.email == email).all()
         if item:
             return item
         return None
@@ -53,7 +65,8 @@ class CreditCRUD(AppCRUD):
                            email=item.email,
                            airline_code=item.airline_code,
                            partner_code=item.partner_code,
-                           status="In Progress")
+                           status="In Progress",
+                           additional_info=item.additional_info)
         for _ in range(5):
             item.reference = generate_reference()
             self.db.add(item)

@@ -1,7 +1,8 @@
 from datetime import date, datetime
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from config.database import get_db
 from typing import Any
+from uuid import UUID
 
 
 class CreditBase(BaseModel):
@@ -15,12 +16,13 @@ class CreditCreate(CreditBase):
     airline_code: str
     partner_code: str
     email: str
+    additional_info: dict[str, Any]
 
 
 class CreditItems(CreditBase):
     status: str
     airline_code: str
-    reference: str
+    reference: UUID
 
     class Config:
         from_attributes = True
