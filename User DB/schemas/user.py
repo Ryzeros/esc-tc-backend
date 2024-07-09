@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Dict
+from schemas.card import Card
 
 
 class UserBase(BaseModel):
@@ -22,3 +24,15 @@ class UserCreate(UserBase):
 class UserAuth(BaseModel):
     username: str
     password: str
+
+
+class UserWithCards(BaseModel):
+    username: str
+    first_name: str
+    last_name: str
+    email: str
+    verified: bool
+    cards: Dict[int, Card]
+
+    class Config:
+        orm_mode = True

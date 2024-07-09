@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from config.database import create_tables
 from routers.user import router as user_router
+from routers.card import router as card_router
 from fastapi.middleware.cors import CORSMiddleware
 
 create_tables()
@@ -19,3 +20,4 @@ async def root():
     return {"message": "Hello World"}
 
 app.include_router(user_router)
+app.include_router(card_router)

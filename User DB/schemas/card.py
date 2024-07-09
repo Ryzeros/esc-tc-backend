@@ -2,13 +2,21 @@ from pydantic import BaseModel
 
 
 class CardBase(BaseModel):
-    owned_by: int
+    user_id: int
     card_name: str
 
 class CardAdd(BaseModel):
-    owned_by: int
+    user_id: int
     card_name: str
     monthly_spending: float
 
 class CardTC(CardBase):
+    card_name: str
     monthly_spending: float
+
+class Card(BaseModel):
+    card_name: str
+    monthly_spending: float
+
+    class Config:
+        orm_mode = True

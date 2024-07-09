@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from services.user import UserService
-from schemas.user import UserCreate, UserBase, UserItems, UserItem, UserAuth
-from schemas.card import CardBase, CardTC, CardAdd
+from schemas.user import UserCreate, UserBase, UserItems, UserItem, UserAuth, UserWithCards
 from utils.service_result import handle_result
 from config.database import get_db
 
@@ -17,17 +16,12 @@ async def get_users(db: get_db = Depends()):
     return handle_result(result)
 
 
-@router.post("/get/", response_model=UserItem)
-async def get_user(username: str, db: get_db = Depends()):
-    result = UserService(db).get_user(username)
+@router.post("/get/", response_model=UserWithCards)
+async def get_user(user_id: int, db: get_db = Depends()):
+    result = UserService(db).get_user(user_id)
     return handle_result(result)
 
-@router.post("/add/card", response_model=CardBase)
-async def add_card(item: CardAdd, db: get_db = Depends()):
-    result = UserService(db).add_card(item)
-    return handle_result(result)
-
-@router.post("/add/user", response_model=UserItems)
+@router.post("/add_user", response_model=UserItems)
 async def add_user(item: UserCreate, db: get_db = Depends()):
     result = UserService(db).add_user(item)
     return handle_result(result)

@@ -1,7 +1,7 @@
 from models.user import UserModel
-from schemas.user import UserCreate
 from models.card import CardModel
-from schemas.card import CardBase, CardTC, CardAdd
+from schemas.user import UserCreate, UserWithCards
+from schemas.card import Card
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -24,7 +24,7 @@ class UserService(AppService):
     def get_user(self, username: str) -> ServiceResult:
         item = UserCRUD(self.db).get_user(username)
         if not item:
-            return ServiceResult(AppException.GetItem({"username": username}))
+            return ServiceResult(AppException.GetItem({"error": "User not found"}))
         return ServiceResult(item)
 
     def add_user(self, item: UserCreate) -> ServiceResult:
@@ -34,14 +34,9 @@ class UserService(AppService):
              return ServiceResult(AppException.AddItem({"error": "invalid password"}))
         item = UserCRUD(self.db).add_user(item)
         if not item:
-            return ServiceResult(AppException.AddItem())
+            return ServiceResult(AppException.AddItem({"error": "Unable to add user"}))
         return ServiceResult(item)
 
-    def add_card(self, item: CardAdd) -> ServiceResult:
-        item = UserCRUD(self.db).add_card(item)
-        if not item:
-            return ServiceResult(AppException.AddItem())
-        return ServiceResult(item)
     
     def auth_user(self, item: UserCreate) -> ServiceResult:
         item = UserCRUD(self.db).auth_user(item.username, item.password)
@@ -59,10 +54,19 @@ class UserCRUD(AppCRUD):
             return item
         return None
 
-    def get_user(self, username: str) -> UserModel:
-        item = self.db.query(UserModel).filter(UserModel.username == username).first()
+    def get_user(self, id: int) -> UserModel:
+        item = self.db.query(UserModel).filter(UserModel.id == id).first()
         if item:
-            return item
+            cards_dict = {card.id: Card(card_name=card.card_name, monthly_spending=card.monthly_spending) for card in item.cards}
+            print(cards_dict)
+            return UserWithCards(
+        username=item.username, 
+        first_name=item.first_name, 
+        last_name=item.last_name,
+        email=item.email,
+        verified=item.verified, 
+        cards=cards_dict
+    )
         return None
     
     def auth_user(self, username: str, password: str) -> UserModel:
@@ -71,20 +75,6 @@ class UserCRUD(AppCRUD):
             return item
         return None
 
-    def add_card(self, item: CardAdd) -> CardModel:
-        item = CardModel(owned_by=item.owned_by,
-                            card_name=item.card_name,
-                            monthly_spending=item.monthly_spending,
-                            first_time_use=1,
-                            created_at=datetime.now())
-        self.db.add(item)
-        try:
-                self.db.commit()
-                self.db.refresh(item)
-                return item
-        except IntegrityError:
-                self.db.rollback()
-                return None
 
     def add_user(self, item: UserCreate) -> UserModel:
         item = UserModel(first_name=item.first_name,
