@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from typing import Dict
 from schemas.card import Card
+from typing import Dict
 
 
 class UserBase(BaseModel):
@@ -32,7 +32,7 @@ class UserWithCards(BaseModel):
     last_name: str
     email: str
     verified: bool
-    cards: Dict[int, Card]
+    cards: Dict[str, Card]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -57,7 +57,7 @@ class UserCRUD(AppCRUD):
     def get_user(self, id: int) -> UserModel:
         item = self.db.query(UserModel).filter(UserModel.id == id).first()
         if item:
-            cards_dict = {card.id: Card(card_name=card.card_name, monthly_spending=card.monthly_spending) for card in item.cards}
+            cards_dict = {card.card_name: Card(monthly_spending = card.monthly_spending, first_time_use = card.first_time_use) for card in item.cards}
             print(cards_dict)
             return UserWithCards(
         username=item.username, 

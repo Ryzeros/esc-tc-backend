@@ -15,8 +15,5 @@ class CardTC(CardBase):
     monthly_spending: float
 
 class Card(BaseModel):
-    card_name: str
     monthly_spending: float
-
-    class Config:
-        orm_mode = True
+    first_time_use: bool
