@@ -11,6 +11,5 @@ class CardModel(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     card_name = Column(String(50), nullable=False)
     monthly_spending = Column(Float, nullable=False)
-    first_time_use = Column(Boolean, nullable=False)
     created_at = Column(DateTime, nullable=False)
     user = relationship("UserModel", back_populates="cards")

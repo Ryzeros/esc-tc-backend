@@ -16,4 +16,3 @@ class CardTC(CardBase):
 
 class Card(BaseModel):
     monthly_spending: float
-    first_time_use: bool

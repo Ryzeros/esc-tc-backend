@@ -17,8 +17,8 @@ async def get_users(db: get_db = Depends()):
 
 
 @router.post("/get/", response_model=UserWithCards)
-async def get_user(user_id: int, db: get_db = Depends()):
-    result = UserService(db).get_user(user_id)
+async def get_user(username: str, db: get_db = Depends()):
+    result = UserService(db).get_user(username)
     return handle_result(result)
 
 @router.post("/add_user", response_model=UserItems)

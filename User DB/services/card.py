@@ -58,7 +58,6 @@ class CardCRUD(AppCRUD):
             item = CardModel(user_id=item.user_id,
                                 card_name=item.card_name,
                                 monthly_spending=item.monthly_spending,
-                                first_time_use=1,
                                 created_at=datetime.now())
             self.db.add(item)
             try:
