@@ -1,7 +1,5 @@
 from models.user import UserModel
-from models.card import CardModel
-from schemas.user import UserCreate, UserWithCards
-from schemas.card import Card
+from schemas.user import UserCreate
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -54,18 +52,10 @@ class UserCRUD(AppCRUD):
             return item
         return None
 
-    def get_user(self, username: str) -> UserModel:
-        item = self.db.query(UserModel).filter(UserModel.username == username).first()
+    def get_user(self, id: int) -> UserModel:
+        item = self.db.query(UserModel).filter(UserModel.id == id).first()
         if item:
-            cards_dict = {card.card_name: Card(monthly_spending = card.monthly_spending) for card in item.cards}
-            return UserWithCards(
-        username=item.username, 
-        first_name=item.first_name, 
-        last_name=item.last_name,
-        email=item.email,
-        verified=item.verified, 
-        cards=cards_dict
-    )
+            return item
         return None
     
     def auth_user(self, username: str, password: str) -> UserModel:
@@ -81,7 +71,7 @@ class UserCRUD(AppCRUD):
                            email=item.email,
                            username=item.username,
                            password=hash_password(item.password),
-                           verified=0,
+                           verified=1,
                            created_at=datetime.now())
         self.db.add(item)
         try:

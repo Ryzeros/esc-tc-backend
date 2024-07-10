@@ -10,6 +10,10 @@ class CardAdd(BaseModel):
     card_name: str
     monthly_spending: float
 
+class CardInfo(BaseModel):
+    card_name: str
+    monthly_spending: float
+
 class CardTC(CardBase):
     card_name: str
     monthly_spending: float

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from services.card import CardService
-from schemas.user import UserCreate, UserBase, UserItems, UserItem, UserAuth
-from schemas.card import CardBase, CardTC, CardAdd
+from schemas.card import CardBase, CardTC, CardAdd, CardInfo
 from utils.service_result import handle_result
 from config.database import get_db
 
@@ -17,7 +16,7 @@ async def get_all_cards(db: get_db = Depends()):
     return handle_result(result)
 
 
-@router.post("/get_cards/", response_model=list[CardTC])
+@router.post("/get_cards/", response_model=list[CardInfo])
 async def get_cards(user_id: int, db: get_db = Depends()):
     result = CardService(db).get_cards(user_id)
     return handle_result(result)

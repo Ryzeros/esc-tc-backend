@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-from schemas.card import Card
-from typing import Dict
 
 
 class UserBase(BaseModel):
@@ -14,6 +12,7 @@ class UserItems(UserBase):
         from_attributes = True
 
 class UserItem(UserItems):
+    id: int
     username: str
 
 class UserCreate(UserBase):
@@ -24,15 +23,3 @@ class UserCreate(UserBase):
 class UserAuth(BaseModel):
     username: str
     password: str
-
-
-class UserWithCards(BaseModel):
-    username: str
-    first_name: str
-    last_name: str
-    email: str
-    verified: bool
-    cards: Dict[str, Card]
-
-    class Config:
-        from_attributes = True
