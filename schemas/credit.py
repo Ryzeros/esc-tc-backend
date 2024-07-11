@@ -23,6 +23,7 @@ class CreditItems(CreditBase):
     status: str
     airline_code: str
     reference: UUID
+    transaction_date: datetime
 
     class Config:
         from_attributes = True
