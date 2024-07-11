@@ -7,8 +7,8 @@ from sqlalchemy.orm import relationship
 
 class CardModel(Base):
     __tablename__ = "cards"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    card_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
     card_name = Column(String(50), nullable=False)
     monthly_spending = Column(Float, nullable=False)
     created_at = Column(DateTime, nullable=False)

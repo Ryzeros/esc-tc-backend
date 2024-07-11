@@ -52,8 +52,8 @@ class UserCRUD(AppCRUD):
             return item
         return None
 
-    def get_user(self, id: int) -> UserModel:
-        item = self.db.query(UserModel).filter(UserModel.id == id).first()
+    def get_user(self, user_id: int) -> UserModel:
+        item = self.db.query(UserModel).filter(UserModel.user_id == user_id).first()
         if item:
             return item
         return None

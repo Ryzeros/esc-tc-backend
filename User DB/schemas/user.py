@@ -12,7 +12,8 @@ class UserItems(UserBase):
         from_attributes = True
 
 class UserItem(UserItems):
-    id: int
+    user_id: int
+    email: str
     username: str
 
 class UserCreate(UserBase):
