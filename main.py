@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 create_tables()
 app = FastAPI()
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow requests from any origin
@@ -16,6 +15,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 @app.get("/")
 async def root():

@@ -2,6 +2,7 @@ from datetime import date, datetime
 from pydantic import BaseModel
 from config.database import get_db
 from typing import Any
+from uuid import UUID
 
 
 class CreditBase(BaseModel):
@@ -21,7 +22,8 @@ class CreditCreate(CreditBase):
 class CreditItems(CreditBase):
     status: str
     airline_code: str
-    reference: str
+    reference: UUID
+    transaction_date: datetime
 
     class Config:
         from_attributes = True

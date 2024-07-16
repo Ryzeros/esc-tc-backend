@@ -11,7 +11,6 @@ class CreditModel(Base):
     first_name = Column(String)
     last_name = Column(String)
     email = Column(String)
-    phone_number = Column()
     reference = Column(Uuid, unique=True)
     airline_code = Column(String)
     partner_code = Column(String)
