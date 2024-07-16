@@ -1,5 +1,5 @@
 from models.credit import CreditModel
-from schemas.credit import CreditItem, CreditCreate
+from schemas.credit import CreditItem, CreditCreate, CreditBoolean
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -29,6 +29,12 @@ class CreditService(AppService):
         if not item:
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
+
+    def delete_item(self, email: str, partner_code: str) -> ServiceResult:
+        outcome = CreditCRUD(self.db).delete_item(email, partner_code)
+        if not outcome.boolean:
+            return ServiceResult(AppException.DeleteItem(dict(outcome)))
+        return ServiceResult(outcome)
 
 
 class CreditCRUD(AppCRUD):
@@ -66,3 +72,10 @@ class CreditCRUD(AppCRUD):
                 self.db.rollback()
                 continue
         return None
+
+    def delete_item(self, email: str, partner_code: str) -> CreditBoolean:
+        rows_del = self.db.query(CreditModel).filter(CreditModel.email == email, CreditModel.partner_code == partner_code).delete()
+        self.db.commit()
+        if rows_del > 0:
+            return CreditBoolean(email=email, boolean=True)
+        return CreditBoolean(email=email, boolean=False)

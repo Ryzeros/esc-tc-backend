@@ -30,3 +30,8 @@ class CreditItems(CreditBase):
 class CreditItem(CreditItems):
     first_name: str
     last_name: str
+
+
+class CreditBoolean(BaseModel):
+    email: str
+    boolean: bool

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from services.credit import CreditService
-from schemas.credit import CreditItem, CreditCreate, CreditItems
+from schemas.credit import CreditItem, CreditCreate, CreditItems, CreditBoolean
 from utils.service_result import handle_result
 from config.database import get_db
 
@@ -27,3 +27,8 @@ async def add_item(item: CreditCreate, db: get_db = Depends()):
     result = CreditService(db).add_item(item)
     return handle_result(result)
 
+
+@router.post("/delete", response_model=CreditBoolean)
+async def delete_credits(email: str, partner_code: str, db: get_db = Depends()):
+    result = CreditService(db).delete_item(email, partner_code)
+    return handle_result(result)

@@ -50,3 +50,11 @@ class AppException(object):
             """
             status_code = 401
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DeleteItem(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            """
+            No credit requests with that email
+            """
+            status_code = 403
+            AppExceptionCase.__init__(self, status_code, context)
