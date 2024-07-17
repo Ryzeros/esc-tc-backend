@@ -6,6 +6,6 @@ from pydantic import BaseModel
 class PromotionBase(BaseModel):
     airline_code: str
     partner_code: str
-    multiplier: float
     expiry: datetime
-    rules: dict[str, Any]
+    points_rule: dict[str, Any]
+    conditions: dict[str, dict[str, Any]]

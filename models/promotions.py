@@ -9,6 +9,6 @@ class PromotionModel(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     airline_code = Column(String, nullable=False)
     partner_code = Column(String, nullable=True)
-    multiplier = Column(Double, nullable=False)
     expiry = Column(DateTime, nullable=True)
-    rules = Column(JSONB, nullable=False)
+    points_rule = Column(JSONB, nullable=False)
+    conditions = Column(JSONB, nullable=False)

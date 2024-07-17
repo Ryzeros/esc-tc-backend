@@ -17,6 +17,7 @@ class CreditModel(Base):
     transaction_date = Column(DateTime)
     amount = Column(Integer)
     additional_info = Column(JSONB, nullable=True, default={})
+    promotion_id = Column(Integer)
     
     status = Column(String)
 

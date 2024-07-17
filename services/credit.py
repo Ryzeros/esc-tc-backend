@@ -7,7 +7,8 @@ from utils.misc import generate_reference
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from utils.validators import validate_member_id
-
+from services.promotions import PromotionCRUD
+from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 
 class CreditService(AppService):
     def get_items(self, member_id: str) -> ServiceResult:
@@ -63,6 +64,9 @@ class CreditCRUD(AppCRUD):
         return None
 
     def add_item(self, item: CreditCreate) -> CreditItem:
+        items = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code=item.airline_code,
+                                                                      partner_code=item.partner_code)
+
         item = CreditModel(member_id=item.member_id,
                            first_name=item.first_name,
                            last_name=item.last_name,
@@ -73,6 +77,21 @@ class CreditCRUD(AppCRUD):
                            partner_code=item.partner_code,
                            status="In Progress",
                            additional_info=item.additional_info)
+
+        if items:
+            max_point = [item.amount, 0]
+            for promo_item in items:
+                if validate_promotions(promo_item.conditions, item.additional_info):
+                    for condition, formula in promo_item.points_rule["point_condition"]:
+                        if eval_points_conditions(condition, item.amount):
+                            points = int(calculate_points(item.amount, formula))
+                            if points > max_point[0]:
+                                max_point[0] = points
+                                max_point[1] = promo_item.id
+                                break
+            item.amount = max_point[0]
+            item.promotion_id = max_point[1]
+
         for _ in range(5):
             item.reference = generate_reference()
             self.db.add(item)
@@ -86,7 +105,8 @@ class CreditCRUD(AppCRUD):
         return None
 
     def delete_item(self, email: str, partner_code: str) -> CreditBoolean:
-        rows_del = self.db.query(CreditModel).filter(CreditModel.email == email, CreditModel.partner_code == partner_code).delete()
+        rows_del = self.db.query(CreditModel).filter(CreditModel.email == email,
+                                                     CreditModel.partner_code == partner_code).delete()
         self.db.commit()
         if rows_del > 0:
             return CreditBoolean(email=email, boolean=True)
