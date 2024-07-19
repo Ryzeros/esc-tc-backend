@@ -34,6 +34,14 @@ class AppException(object):
             status_code = 500
             AppExceptionCase.__init__(self, status_code, context)
 
+    class InvalidItem(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            """
+            Item is invalid
+            """
+            status_code = 400
+            AppExceptionCase.__init__(self, status_code, context)
+
     class GetItem(AppExceptionCase):
         def __init__(self, context: dict = None):
             """

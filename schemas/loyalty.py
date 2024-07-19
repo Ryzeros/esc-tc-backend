@@ -10,9 +10,6 @@ class LoyaltyItem(BaseModel):
     enrollment_link: str
     terms_link: str
 
-    class Config:
-        from_attributes = True
-
 
 class LoyaltyValidate(LoyaltyItem):
     regex_pattern: str

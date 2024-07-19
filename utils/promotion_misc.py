@@ -6,7 +6,6 @@ def eval_points_conditions(string: str, x: int):
     Evaluate the condition for x
     """
     parts = string.split()
-    print(parts)
 
     if len(parts) == 3:
         operator = parts[1].strip()

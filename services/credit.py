@@ -6,9 +6,10 @@ from utils.app_exceptions import AppException
 from utils.misc import generate_reference
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from utils.validators import validate_member_id
+from utils.validators import validate_member_id, validate_airline_code
 from services.promotions import PromotionCRUD
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
+
 
 class CreditService(AppService):
     def get_items(self, member_id: str) -> ServiceResult:
@@ -24,8 +25,10 @@ class CreditService(AppService):
         return ServiceResult(item)
 
     def add_item(self, item: CreditCreate) -> ServiceResult:
+        if not validate_airline_code(item.airline_code, self.db):
+            return ServiceResult(AppException.InvalidItem({"error": "invalid airline code"}))
         if not validate_member_id(item.member_id, item.airline_code, self.db):
-            return ServiceResult(AppException.AddItem({"error": "invalid member ID"}))
+            return ServiceResult(AppException.InvalidItem({"error": "invalid member ID"}))
         item = CreditCRUD(self.db).add_item(item)
         if not item:
             return ServiceResult(AppException.AddItem())
