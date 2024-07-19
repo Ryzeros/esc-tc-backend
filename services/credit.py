@@ -27,6 +27,7 @@ class CreditService(AppService):
     def add_item(self, item: CreditCreate) -> ServiceResult:
         if not validate_airline_code(item.airline_code, self.db):
             return ServiceResult(AppException.InvalidItem({"error": "invalid airline code"}))
+
         if not validate_member_id(item.member_id, item.airline_code, self.db):
             return ServiceResult(AppException.InvalidItem({"error": "invalid member ID"}))
         item = CreditCRUD(self.db).add_item(item)

@@ -28,13 +28,13 @@ async def add_item(item: CreditCreate, db: get_db = Depends()):
     return handle_result(result)
 
 
-@router.post("/delete", response_model=CreditBoolean)
+@router.post("/delete/", response_model=CreditBoolean)
 async def delete_credits(email: str, partner_code: str, db: get_db = Depends()):
     result = CreditService(db).delete_item(email, partner_code)
     return handle_result(result)
 
 
-@router.post("/get_by_email", response_model=list[CreditItems])
+@router.post("/get_by_email/", response_model=list[CreditItems])
 async def get_item(email: str, db: get_db = Depends()):
     result = CreditService(db).get_items_by_email(email)
     return handle_result(result)
