@@ -1,4 +1,4 @@
-from config.credentials_config import pwd_context
+import bcrypt
 from typing import Optional
 from datetime import timedelta, datetime
 from fastapi import Depends, HTTPException, status
@@ -7,15 +7,16 @@ from config.database import get_db
 from models.user import UserModel
 from schemas.user import UserTokenData
 import jwt
-from jwt import PyJWTError
 
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed_password.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
