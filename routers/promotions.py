@@ -3,6 +3,8 @@ from utils.service_result import handle_result
 from config.database import get_db
 from schemas.promotions import PromotionBase
 from services.promotions import PromotionService
+from utils.credentials_misc import require_role
+from models.user import UserModel
 
 router = APIRouter(
     prefix="/promotions",
@@ -11,7 +13,7 @@ router = APIRouter(
 
 
 @router.post("/get_all/", response_model=list[PromotionBase])
-async def get_all_promotions(db: get_db = Depends()):
+async def get_all_promotions(current_user: UserModel = Depends(require_role("user")), db: get_db = Depends()):
     result = PromotionService(db).get_all_promotions()
     return handle_result(result)
 

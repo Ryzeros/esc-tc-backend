@@ -65,3 +65,11 @@ class AppException(object):
             """
             status_code = 403
             AppExceptionCase.__init__(self, status_code, context)
+
+    class InvalidAccount(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            """
+            Invalid username or password
+            """
+            status_code = 403
+            AppExceptionCase.__init__(self, status_code, context)
