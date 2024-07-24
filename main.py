@@ -1,4 +1,3 @@
-import logging
 from fastapi import FastAPI
 from config.database import create_tables
 from routers.credit import router as credit_router
@@ -7,7 +6,6 @@ from routers.promotions import router as promotion_router
 from routers.user import router as user_router
 from fastapi.middleware.cors import CORSMiddleware
 
-logging.getLogger('passlib').setLevel(logging.ERROR)
 
 create_tables()
 app = FastAPI()
@@ -19,7 +17,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 @app.get("/")

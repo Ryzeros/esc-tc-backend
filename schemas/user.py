@@ -23,3 +23,8 @@ class UserRegisterResponse(BaseModel):
 
 class UserResponse(UserRegisterResponse):
     roles: str
+
+
+class UserLoginRequest(BaseModel):
+    email: str
+    password: str

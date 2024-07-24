@@ -35,8 +35,8 @@ class CreditService(AppService):
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
 
-    def get_items_by_email(self, email: str) -> ServiceResult:
-        item = CreditCRUD(self.db).get_items_by_email(email)
+    def get_items_by_email(self, email: str, partner_code: str) -> ServiceResult:
+        item = CreditCRUD(self.db).get_items_by_email(email, partner_code)
         if not item:
             return ServiceResult(AppException.GetItem({"email": email}))
         return ServiceResult(item)
@@ -55,8 +55,9 @@ class CreditCRUD(AppCRUD):
             return item
         return None
 
-    def get_items_by_email(self, email: str) -> CreditModel:
-        item = self.db.query(CreditModel).filter(CreditModel.email == email).all()
+    def get_items_by_email(self, email: str, partner_code: str) -> CreditModel:
+        item = self.db.query(CreditModel).filter(CreditModel.email == email,
+                                                 CreditModel.partner_code == partner_code).all()
         if item:
             return item
         return None
