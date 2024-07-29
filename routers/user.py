@@ -16,8 +16,8 @@ router = APIRouter(
 
 
 @router.post("/token", response_model=UserToken)
-async def login_for_access_token(item: UserLoginRequest, db: get_db = Depends()):
-    item = UserService(db).authenticate_user(item.email, item.password)
+async def login_for_access_token(item: OAuth2PasswordRequestForm = Depends(), db: get_db = Depends()):
+    item = UserService(db).authenticate_user(item.username, item.password)
     return handle_result(item)
 
 
