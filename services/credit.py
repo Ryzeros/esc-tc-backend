@@ -83,7 +83,7 @@ class CreditCRUD(AppCRUD):
             promotions_items = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code=item.airline_code,
                                                                                      partner_code=item.partner_code)
         else:
-            promotions_items = PromotionCRUD(self.db).get_promotion(promotion_id=item.promotion_id)
+            promotions_items = PromotionCRUD(self.db).get_promotion_by_id(promotion_id=item.promotion_id)
 
         item = CreditModel(member_id=item.member_id,
                            first_name=item.first_name,

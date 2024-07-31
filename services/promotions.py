@@ -1,7 +1,7 @@
 from typing import List, Type
-
+from sqlalchemy import or_
 from models.promotions import PromotionModel
-from schemas.promotions import PromotionBase
+from schemas.promotions import PromotionBase, GetPromotionRequest
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -15,8 +15,8 @@ class PromotionService(AppService):
             return ServiceResult(AppException.GetItem())
         return ServiceResult(item)
 
-    def get_promotion(self, promotion_id: int) -> ServiceResult:
-        item = PromotionCRUD(self.db).get_promotion(promotion_id)
+    def get_promotion_by_id(self, promotion_id: int) -> ServiceResult:
+        item = PromotionCRUD(self.db).get_promotion_by_id(promotion_id)
         if not item:
             return ServiceResult(AppException.GetItem())
         return ServiceResult(item)
@@ -41,7 +41,7 @@ class PromotionCRUD(AppCRUD):
             return item
         return None
 
-    def get_promotion(self, promotion_id: int) -> PromotionModel | None:
+    def get_promotion_by_id(self, promotion_id: int) -> PromotionModel | None:
         item = self.db.query(PromotionModel).filter(PromotionModel.id == promotion_id).first()
         if item:
             return item
