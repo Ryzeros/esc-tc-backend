@@ -15,6 +15,8 @@ class UserRegisterRequest(BaseModel):
     email: str
     password: str
     confirm_password: str
+    roles: str | None = None
+    partner_code: str | None = None
 
 
 class UserRegisterResponse(BaseModel):
@@ -28,3 +30,7 @@ class UserResponse(UserRegisterResponse):
 class UserLoginRequest(BaseModel):
     username: str
     password: str
+
+
+class PartnerCode(BaseModel):
+    partner_code: str

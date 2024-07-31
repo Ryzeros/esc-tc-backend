@@ -14,7 +14,7 @@ class UserService(AppService):
         if not user:
             return ServiceResult(AppException.InvalidAccount())
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(data={"sub": email}, expires_delta=access_token_expires)
+        access_token = create_access_token(data={"email": email}, expires_delta=access_token_expires)
         user_token = UserToken(
             access_token=access_token,
             token_type="bearer"
@@ -24,7 +24,7 @@ class UserService(AppService):
     def signup(self, item: UserRegisterRequest) -> ServiceResult:
         if not item.password == item.confirm_password:
             return ServiceResult(AppException.InvalidItem({"error": "password and confirm password don't match"}))
-        item = UserCRUD(self.db).signup(item.email, item.password)
+        item = UserCRUD(self.db).signup(item)
         if not item:
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
@@ -38,11 +38,16 @@ class UserCRUD(AppCRUD):
                 return user
         return None
 
-    def signup(self, email: str, password: str) -> UserModel:
+    def signup(self, item: UserRegisterRequest) -> UserModel:
+        if item.roles is None:
+            item.roles = "user"
+        if "partner" not in item.roles:
+            item.partner_code = None
         item = UserModel(
-            email=email,
-            password=get_password_hash(password),
-            roles="user"
+            email=item.email,
+            password=get_password_hash(item.password),
+            roles=item.roles,
+            partner_code=item.partner_code
         )
         self.db.add(item)
         self.db.commit()

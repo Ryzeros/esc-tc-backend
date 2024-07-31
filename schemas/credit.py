@@ -1,6 +1,5 @@
-from datetime import date, datetime
-from pydantic import BaseModel
-from config.database import get_db
+from datetime import datetime
+from pydantic import BaseModel, PrivateAttr
 from typing import Any
 from uuid import UUID
 
@@ -14,9 +13,17 @@ class CreditCreate(CreditBase):
     first_name: str
     last_name: str
     airline_code: str
-    partner_code: str
+    _partner_code: str = PrivateAttr()
     email: str
     additional_info: dict[str, Any]
+    promotion_id: int | None = None
+
+    @property
+    def partner_code(self):
+        return self._partner_code
+
+    def set_partner_code(self, partner_code: str):
+        self._partner_code = partner_code
 
 
 class CreditItems(CreditBase):
@@ -34,3 +41,39 @@ class CreditItem(CreditItems):
 class CreditBoolean(BaseModel):
     email: str
     boolean: bool
+
+
+class CreditReference(BaseModel):
+    reference: str
+    _partner_code: str = PrivateAttr()
+
+    @property
+    def partner_code(self):
+        return self._partner_code
+
+    def set_partner_code(self, partner_code: str):
+        self._partner_code = partner_code
+
+
+class CreditEmail(BaseModel):
+    email: str
+    _partner_code: str = PrivateAttr()
+
+    @property
+    def partner_code(self):
+        return self._partner_code
+
+    def set_partner_code(self, partner_code: str):
+        self._partner_code = partner_code
+
+
+class CreditMember(BaseModel):
+    member_id: str
+    _partner_code: str = PrivateAttr()
+
+    @property
+    def partner_code(self):
+        return self._partner_code
+
+    def set_partner_code(self, partner_code: str):
+        self._partner_code = partner_code

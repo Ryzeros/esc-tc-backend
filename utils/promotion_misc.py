@@ -89,14 +89,15 @@ def validate_promotions(rule: dict, data: dict):
         return False
 
     for key, condition in rule.items():
+        print(key, condition)
         if key not in data:
             return False
 
         operation = condition.get('op', 'eq')
         value = condition['value']
+        print(value)
         if isinstance(value, list):
             operation = 'in'
-
         if not operator_map[operation](data[key], value):
             return False
     return True

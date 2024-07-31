@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from config.credentials_config import SECRET_KEY, ALGORITHM, oauth2_scheme
 from config.database import get_db
 from models.user import UserModel
-from schemas.user import UserTokenData
+from schemas.user import UserTokenData, PartnerCode
 import jwt
 
 
@@ -38,7 +38,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: get_db = Dep
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+        email: str = payload.get("email")
         if email is None:
             raise credentials_exception
         token_data = UserTokenData(email=email)
@@ -63,3 +63,4 @@ def require_role(role: str):
         else:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
     return role_dependency
+

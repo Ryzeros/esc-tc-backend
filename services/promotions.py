@@ -1,3 +1,5 @@
+from typing import List, Type
+
 from models.promotions import PromotionModel
 from schemas.promotions import PromotionBase
 from utils.service_result import ServiceResult
@@ -13,6 +15,12 @@ class PromotionService(AppService):
             return ServiceResult(AppException.GetItem())
         return ServiceResult(item)
 
+    def get_promotion(self, promotion_id: int) -> ServiceResult:
+        item = PromotionCRUD(self.db).get_promotion(promotion_id)
+        if not item:
+            return ServiceResult(AppException.GetItem())
+        return ServiceResult(item)
+
     def add_item(self, item: PromotionBase) -> ServiceResult:
         item = PromotionCRUD(self.db).add_items(item)
         if not item:
@@ -22,13 +30,19 @@ class PromotionService(AppService):
     def get_airline_partner_promotions(self, airline_code: str, partner_code: str) -> ServiceResult:
         item = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code, partner_code)
         if not item:
-            return item
+            return ServiceResult(AppException.GetItem())
         return ServiceResult(item)
 
 
 class PromotionCRUD(AppCRUD):
-    def get_all_promotions(self) -> PromotionModel:
+    def get_all_promotions(self) -> list[Type[PromotionModel]] | None:
         item = self.db.query(PromotionModel).all()
+        if item:
+            return item
+        return None
+
+    def get_promotion(self, promotion_id: int) -> PromotionModel | None:
+        item = self.db.query(PromotionModel).filter(PromotionModel.id == promotion_id).first()
         if item:
             return item
         return None
@@ -46,7 +60,7 @@ class PromotionCRUD(AppCRUD):
         self.db.refresh(item)
         return item
 
-    def get_airline_partner_promotions(self, airline_code: str, partner_code: str) -> PromotionModel:
+    def get_airline_partner_promotions(self, airline_code: str, partner_code: str) -> list[PromotionModel] | None:
         item = self.db.query(PromotionModel).filter(PromotionModel.airline_code == airline_code,
                                                     PromotionModel.partner_code == partner_code,
                                                     PromotionModel.expiry > datetime.now()).all()

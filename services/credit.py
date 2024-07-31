@@ -1,5 +1,5 @@
 from models.credit import CreditModel
-from schemas.credit import CreditItem, CreditCreate, CreditBoolean
+from schemas.credit import CreditItem, CreditCreate, CreditBoolean, CreditEmail, CreditReference, CreditMember
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -12,16 +12,16 @@ from utils.promotion_misc import validate_promotions, eval_points_conditions, ca
 
 
 class CreditService(AppService):
-    def get_items(self, member_id: str) -> ServiceResult:
+    def get_items(self, member_id: CreditMember) -> ServiceResult:
         item = CreditCRUD(self.db).get_items(member_id)
         if not item:
-            return ServiceResult(AppException.GetItem({"member_id": member_id}))
+            return ServiceResult(AppException.GetItem({"member_id": member_id.member_id}))
         return ServiceResult(item)
 
-    def get_item(self, reference: str) -> ServiceResult:
-        item = CreditCRUD(self.db).get_item(reference)
+    def get_item_by_reference(self, reference: CreditReference) -> ServiceResult:
+        item = CreditCRUD(self.db).get_item_by_reference(reference)
         if not item:
-            return ServiceResult(AppException.GetItem({"reference": reference}))
+            return ServiceResult(AppException.GetItem({"reference": reference.reference}))
         return ServiceResult(item)
 
     def add_item(self, item: CreditCreate) -> ServiceResult:
@@ -35,42 +35,48 @@ class CreditService(AppService):
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
 
-    def get_items_by_email(self, email: str, partner_code: str) -> ServiceResult:
-        item = CreditCRUD(self.db).get_items_by_email(email, partner_code)
+    def get_items_by_email(self, item: CreditEmail) -> ServiceResult:
+        item = CreditCRUD(self.db).get_items_by_email(item)
         if not item:
-            return ServiceResult(AppException.GetItem({"email": email}))
+            return ServiceResult(AppException.GetItem({"email": item.email}))
         return ServiceResult(item)
 
-    def delete_item(self, email: str, partner_code: str) -> ServiceResult:
-        outcome = CreditCRUD(self.db).delete_item(email, partner_code)
+    def delete_item(self, item: CreditEmail) -> ServiceResult:
+        outcome = CreditCRUD(self.db).delete_item(item.email, item.partner_code)
         if not outcome.boolean:
+            outcome["message"] = "No records with this email"
             return ServiceResult(AppException.DeleteItem(dict(outcome)))
         return ServiceResult(outcome)
 
 
 class CreditCRUD(AppCRUD):
-    def get_items(self, member_id: str) -> CreditModel:
-        item = self.db.query(CreditModel).filter(CreditModel.member_id == member_id).all()
+    def get_items(self, member_id: CreditMember) -> CreditModel:
+        item = self.db.query(CreditModel).filter(CreditModel.member_id == member_id.member_id,
+                                                 CreditModel.partner_code == member_id.partner_code).all()
         if item:
             return item
         return None
 
-    def get_items_by_email(self, email: str, partner_code: str) -> CreditModel:
-        item = self.db.query(CreditModel).filter(CreditModel.email == email,
-                                                 CreditModel.partner_code == partner_code).all()
+    def get_items_by_email(self, email: CreditEmail) -> CreditModel:
+        item = self.db.query(CreditModel).filter(CreditModel.email == email.email,
+                                                 CreditModel.partner_code == email.partner_code).all()
         if item:
             return item
         return None
 
-    def get_item(self, reference: str) -> CreditModel:
-        item = self.db.query(CreditModel).filter(CreditModel.reference == reference).first()
+    def get_item_by_reference(self, reference: CreditReference) -> CreditModel:
+        item = self.db.query(CreditModel).filter(CreditModel.reference == reference.reference,
+                                                 CreditModel.partner_code == reference.partner_code).first()
         if item:
             return item
         return None
 
     def add_item(self, item: CreditCreate) -> CreditItem:
-        items = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code=item.airline_code,
-                                                                      partner_code=item.partner_code)
+        if item.promotion_id is None:
+            promotions_items = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code=item.airline_code,
+                                                                                     partner_code=item.partner_code)
+        else:
+            promotions_items = PromotionCRUD(self.db).get_promotion(promotion_id=item.promotion_id)
 
         item = CreditModel(member_id=item.member_id,
                            first_name=item.first_name,
@@ -83,9 +89,9 @@ class CreditCRUD(AppCRUD):
                            status="In Progress",
                            additional_info=item.additional_info)
 
-        if items:
+        if promotions_items:
             max_point = [item.amount, 0]
-            for promo_item in items:
+            for promo_item in promotions_items:
                 if validate_promotions(promo_item.conditions, item.additional_info):
                     for condition, formula in promo_item.points_rule["point_condition"]:
                         if eval_points_conditions(condition, item.amount):

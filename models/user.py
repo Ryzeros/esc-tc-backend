@@ -10,6 +10,7 @@ class UserModel(Base):
     password = Column(String)
     disabled = Column(Boolean, default=False)
     roles = Column(String)
+    partner_code = Column(String)
 
     __table_args__ = (
         UniqueConstraint('email', name='uix_2'),
