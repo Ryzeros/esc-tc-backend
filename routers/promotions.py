@@ -19,6 +19,6 @@ async def get_all_promotions(current_user: UserModel = Depends(require_role("use
 
 
 @router.post("/add", response_model=PromotionBase)
-async def get_all_promotions(item: PromotionBase, db: get_db = Depends()):
+async def add_promotion(item: PromotionBase, db: get_db = Depends()):
     result = PromotionService(db).add_item(item)
     return handle_result(result)

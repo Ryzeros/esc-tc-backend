@@ -1,5 +1,5 @@
 from models.credit import CreditModel
-from schemas.credit import CreditItem, CreditCreate, CreditBoolean, CreditEmail, CreditReference, CreditMember
+from schemas.credit import CreditItem, CreditCreate, CreditEmailBoolean, CreditEmail, CreditReferenceBoolean, CreditReference, CreditMember
 from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
@@ -41,10 +41,17 @@ class CreditService(AppService):
             return ServiceResult(AppException.GetItem({"email": item.email}))
         return ServiceResult(item)
 
-    def delete_item(self, item: CreditEmail) -> ServiceResult:
-        outcome = CreditCRUD(self.db).delete_item(item.email, item.partner_code)
+    def delete_by_email(self, item: CreditEmail) -> ServiceResult:
+        outcome = CreditCRUD(self.db).delete_by_email(item.email, item.partner_code)
         if not outcome.boolean:
             outcome["message"] = "No records with this email"
+            return ServiceResult(AppException.DeleteItem(dict(outcome)))
+        return ServiceResult(outcome)
+
+    def delete_by_reference(self, item: CreditReference) -> ServiceResult:
+        outcome = CreditCRUD(self.db).delete_by_reference(item.reference, item.partner_code)
+        if not outcome.boolean:
+            outcome["message"] = "No records with this reference"
             return ServiceResult(AppException.DeleteItem(dict(outcome)))
         return ServiceResult(outcome)
 
@@ -115,10 +122,18 @@ class CreditCRUD(AppCRUD):
                 continue
         return None
 
-    def delete_item(self, email: str, partner_code: str) -> CreditBoolean:
+    def delete_by_email(self, email: str, partner_code: str) -> CreditEmailBoolean:
         rows_del = self.db.query(CreditModel).filter(CreditModel.email == email,
                                                      CreditModel.partner_code == partner_code).delete()
         self.db.commit()
         if rows_del > 0:
-            return CreditBoolean(email=email, boolean=True)
-        return CreditBoolean(email=email, boolean=False)
+            return CreditEmailBoolean(email=email, boolean=True)
+        return CreditEmailBoolean(email=email, boolean=False)
+
+    def delete_by_reference(self, reference: str, partner_code: str) -> CreditReferenceBoolean:
+        rows_del = self.db.query(CreditModel).filter(CreditModel.reference == reference,
+                                                     CreditModel.partner_code == partner_code).delete()
+        self.db.commit()
+        if rows_del == 1:
+            return CreditReferenceBoolean(reference=reference, boolean=True)
+        return CreditReferenceBoolean(reference=reference, boolean=False)

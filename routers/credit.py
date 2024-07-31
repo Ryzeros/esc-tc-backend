@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from services.credit import CreditService
-from schemas.credit import CreditItem, CreditCreate, CreditItems, CreditBoolean, CreditMember, CreditEmail, CreditReference
+from schemas.credit import CreditItem, CreditCreate, CreditItems, CreditEmailBoolean, CreditMember, CreditEmail, CreditReference
 from utils.service_result import handle_result
 from config.database import get_db
 from utils.credentials_misc import require_role
@@ -33,11 +33,11 @@ async def add_item(item: CreditCreate, current_user: UserModel = Depends(require
     return handle_result(result)
 
 
-@router.post("/delete/", response_model=CreditBoolean)
-async def delete_credits(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
+@router.post("/delete_by_email/", response_model=CreditEmailBoolean)
+async def delete_by_email(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
                          db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
-    result = CreditService(db).delete_item(item)
+    result = CreditService(db).delete_by_email(item)
     return handle_result(result)
 
 
@@ -45,5 +45,13 @@ async def delete_credits(item: CreditEmail, current_user: UserModel = Depends(re
 async def get_item(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
                    db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
-    result = CreditService(db).get_items_by_email(item.email)
+    result = CreditService(db).get_items_by_email(item)
+    return handle_result(result)
+
+
+@router.post("/delete_by_reference/", response_model=CreditEmailBoolean)
+async def delete_by_reference(item: CreditReference, current_user: UserModel = Depends(require_role("partner")),
+                              db: get_db = Depends()):
+    item.set_partner_code(current_user.partner_code)
+    result = CreditService(db).delete_by_reference(item)
     return handle_result(result)

@@ -38,8 +38,13 @@ class CreditItem(CreditItems):
     last_name: str
 
 
-class CreditBoolean(BaseModel):
+class CreditEmailBoolean(BaseModel):
     email: str
+    boolean: bool
+
+
+class CreditReferenceBoolean(BaseModel):
+    reference: str
     boolean: bool
 
 

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class PromotionBase(BaseModel):
+    id: int
     airline_code: str
     partner_code: str
     expiry: datetime
