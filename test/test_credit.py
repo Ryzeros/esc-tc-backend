@@ -1,234 +1,331 @@
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+from datetime import timedelta
 from config.database import get_db
 from services.credit import CreditService, CreditCRUD
-from schemas.credit import CreditCreate
+from schemas.credit import CreditCreate, CreditMember
 from models.credit import CreditModel
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 from utils.validators import validate_airline_code, validate_member_id
+from utils.credentials_misc import create_access_token
 
 client = TestClient(app)
 
 
 @pytest.fixture(scope="module")
 def client_with_cleanup():
-    yield client
-    cleanup()
+    headers = startup()
+    yield client, headers
+    cleanup(headers)
 
 
-def cleanup():
+def startup():
+    data = {"email": "admin@dbs.com"}
+    token = create_access_token(data, timedelta(minutes=5))
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    return headers
+
+
+def cleanup(headers):
     data = {
         "email": "ryzeros@gmail.com",
-        "partner_code": "DBS"
     }
-    data_2 = {
-        "email": "ryzeros@gmail.com",
-        "partner_code": "OCBC"
-    }
-    client.post("/credit/delete", params=data)
-    client.post("/credit/delete", params=data_2)
+    client.post("/credit/delete_by_email/", json=data, headers=headers)
 
 
-def test_add_credit_no_promotions(client_with_cleanup):
-    data = {
-        "member_id": "1234567890",
-        "amount": 100,
-        "first_name": "You Xiang",
-        "last_name": "Teo",
-        "airline_code": "GJP",
-        "partner_code": "OCBC",
-        "email": "ryzeros@gmail.com",
-        "additional_info": {}
-    }
-
-    response = client_with_cleanup.post("/credit/add/", json=data)
-    assert response.status_code == 200
-    response_data = response.json()
-    assert "reference" in response_data
-    assert "transaction_date" in response_data
-    assert response_data["status"] == "In Progress"
-    assert response_data["amount"] == 100
-    data["reference"] = response_data["reference"]
-    data["transaction_date"] = response_data["transaction_date"]
-    data.pop("additional_info")
-    data.pop("email")
-    data.pop("partner_code")
-    data["status"] = response_data["status"]
-
-    assert data == response_data
-
-
-def test_add_credit_invalid_member_id(client_with_cleanup):
-    data = {
-        "member_id": "15",
-        "amount": 100,
-        "first_name": "You Xiang",
-        "last_name": "Teo",
-        "airline_code": "GJP",
-        "partner_code": "OCBC",
-        "email": "ryzeros@gmail.com",
-        "additional_info": {}
-    }
-    response = client_with_cleanup.post("/credit/add/", json=data)
-    assert response.status_code == 400
-    assert response.json() == {
-        "detail": {
-            "error": "invalid member ID"
+class TestGetByEmailAirlineCode:
+    def test_get_by_member_id_invalid(self, client_with_cleanup):
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
         }
-    }
 
-
-def test_add_credit_invalid_airline_code(client_with_cleanup):
-    data = {
-        "member_id": "1234567890",
-        "amount": 100,
-        "first_name": "You Xiang",
-        "last_name": "Teo",
-        "airline_code": "NON",
-        "partner_code": "OCBC",
-        "email": "ryzeros@gmail.com",
-        "additional_info": {}
-    }
-    response = client_with_cleanup.post("/credit/add/", json=data)
-    assert response.status_code == 400
-    assert response.json() == {
-        "detail": {
-            "error": "invalid airline code"
+        data = {
+            "member_id": "0987654321",
+            "airline_code": "GJP"
         }
-    }
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
 
+        response = client_with_cleanup.post("/credit/get_by_member_id/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert isinstance(response_data, list)
+        assert len(response_data) == 1
+        assert response_data[0]['reference'] == add_response.json()['reference']
 
-def test_add_credit_with_promotions(client_with_cleanup):
-    data = {
-        "member_id": "1234567890",
-        "amount": 100,
-        "first_name": "You Xiang",
-        "last_name": "Teo",
-        "airline_code": "GJP",
-        "partner_code": "DBS",
-        "email": "ryzeros@gmail.com",
-        "additional_info": {
-            "black_card_holder": "true",
-            "monthly_spending": 2000
+    def test_get_by_member_id_invalid_airline(self, client_with_cleanup):
+        data = {
+            "member_id": "0987654321",
+            "airline_code": "ASD"
         }
-    }
+        client_with_cleanup, headers = client_with_cleanup
 
-    response = client_with_cleanup.post("/credit/add/", json=data)
-    assert response.status_code == 200
-    response_data = response.json()
-    assert "reference" in response_data
-    assert "transaction_date" in response_data
-    assert response_data["status"] == "In Progress"
-    assert response_data["amount"] == 700
-    data["reference"] = response_data["reference"]
-    data["transaction_date"] = response_data["transaction_date"]
-    data.pop("additional_info")
-    data.pop("email")
-    data.pop("partner_code")
-    data["amount"] = response_data["amount"]
-    data["status"] = response_data["status"]
+        response = client_with_cleanup.post("/credit/get_by_member_id/", json=data, headers=headers)
+        assert response.status_code == 404
 
-    assert data == response_data
+    def test_get_by_member_id_no_item(self, client_with_cleanup):
+        data = {
+            "email": "ryzeros@gmail.com",
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        client.post("/credit/delete_by_email/", json=data, headers=headers)
+        data = {
+            "member_id": "0987654321",
+            "airline_code": "GJP"
+        }
 
+        response = client_with_cleanup.post("/credit/get_by_member_id/", json=data, headers=headers)
+        assert response.status_code == 404
 
-def test_credit_service_add_item():
-    db = next(get_db())
-    item = CreditCreate(
-        member_id="1234567890",
-        amount=100,
-        first_name="You Xiang",
-        last_name="Teo",
-        airline_code="GJP",
-        partner_code="DBS",
-        email="ryzeros@gmail.com",
-        additional_info={}
+    def test_credit_service_get_by_member_id(self, client_with_cleanup):
+        db = next(get_db())
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
+        item = CreditMember(
+            member_id="0987654321",
+            airline_code="GJP"
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).get_by_member_id(item)
+        assert item.status_code is None
+        assert item.success
+        assert item.exception_case is None
+        assert isinstance(item.value, list)
+        assert len(item.value) == 1
+        assert str(item.value[0].reference) == add_response.json()["reference"]
 
-    )
-    item = CreditService(db).add_item(item)
-    assert item.status_code is None
-    assert item.success
-    assert item.exception_case is None
-    assert isinstance(item.value, CreditModel)
-    assert item.value.member_id == "1234567890"
-    assert item.value.status == "In Progress"
-
-
-def test_credit_crud_add_item():
-    db = next(get_db())
-    item = CreditCreate(
-        member_id="1234567890",
-        amount=100,
-        first_name="You Xiang",
-        last_name="Teo",
-        airline_code="GJP",
-        partner_code="DBS",
-        email="ryzeros@gmail.com",
-        additional_info={}
-
-    )
-    item = CreditCRUD(db).add_item(item)
-    assert isinstance(item, CreditModel)
-    assert item.member_id == "1234567890"
-    assert item.status == "In Progress"
-
-
-def test_validate_airline_code():
-    db = next(get_db())
-    assert validate_airline_code("GJP", db)
-    assert not validate_airline_code("NON", db)
-
-
-def test_validate_member_id():
-    db = next(get_db())
-    assert validate_member_id("1234567890", "GJP", db)
-    assert validate_member_id("1234567890123456", "GJP", db)
-    assert not validate_member_id("123456", "GJP", db)
+    def test_credit_crud_get_by_member_id(self, client_with_cleanup):
+        db = next(get_db())
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
+        item = CreditMember(
+            member_id="0987654321",
+            airline_code="GJP"
+        )
+        item.set_partner_code("DBS")
+        item = CreditCRUD(db).get_by_member_id(item)
+        assert len(item) == 1
+        assert str(item[0].reference) == add_response.json()["reference"]
 
 
-def test_validate_promotions():
-    rule = {
-        "monthly_spending": {"op": "gt", "value": 1500},
-        "black_card_holder": {"op": "eq", "value": "true"}
-    }
+class TestAddCredit:
+    def test_add_credit_no_promotions(self, client_with_cleanup):
+        data = {
+            "member_id": "1234567890",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        response = client_with_cleanup.post("/credit/add/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert "reference" in response_data
+        assert "transaction_date" in response_data
+        assert response_data["status"] == "In Progress"
+        assert response_data["amount"] == 100
+        data["reference"] = response_data["reference"]
+        data["transaction_date"] = response_data["transaction_date"]
+        data.pop("additional_info")
+        data.pop("email")
+        data["status"] = response_data["status"]
 
-    valid_data = {
-        "monthly_spending": 2000,
-        "black_card_holder": "true"
-    }
+        assert data == response_data
 
-    invalid_data = {
-        "monthly_spending": 1000,
-        "black_card_holder": "true"
-    }
+    def test_add_credit_invalid_member_id(self, client_with_cleanup):
+        data = {
+            "member_id": "15",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        response = client_with_cleanup.post("/credit/add/", json=data, headers=headers)
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": {
+                "error": "invalid member ID"
+            }
+        }
 
-    assert validate_promotions(rule, valid_data)
-    assert not validate_promotions(rule, invalid_data)
+    def test_add_credit_invalid_airline_code(self, client_with_cleanup):
+        data = {
+            "member_id": "1234567890",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "NON",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        response = client_with_cleanup.post("/credit/add/", json=data, headers=headers)
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": {
+                "error": "invalid airline code"
+            }
+        }
 
+    def test_add_credit_with_promotions(self, client_with_cleanup):
+        data = {
+            "member_id": "1234567890",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {
+                "black_card_holder": "true",
+                "monthly_spending": 2000
+            }
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        response = client_with_cleanup.post("/credit/add/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert "reference" in response_data
+        assert "transaction_date" in response_data
+        assert response_data["status"] == "In Progress"
+        assert response_data["amount"] == 700
+        data["reference"] = response_data["reference"]
+        data["transaction_date"] = response_data["transaction_date"]
+        data.pop("additional_info")
+        data.pop("email")
+        data["amount"] = response_data["amount"]
+        data["status"] = response_data["status"]
 
-def test_eval_points_conditions():
-    condition = "600 < x < 1000"
-    condition_two = "x > 6000"
-    condition_three = "600 < x <= 1000"
+        assert data == response_data
 
-    assert eval_points_conditions(condition, 700)
-    assert not eval_points_conditions(condition, 100)
-    assert not eval_points_conditions(condition, 1000)
+    def test_credit_service_add_item(self):
+        db = next(get_db())
+        item = CreditCreate(
+            member_id="1234567890",
+            amount=100,
+            first_name="You Xiang",
+            last_name="Teo",
+            airline_code="GJP",
+            email="ryzeros@gmail.com",
+            additional_info={}
 
-    assert eval_points_conditions(condition_two, 6100)
-    assert not eval_points_conditions(condition_two, 5000)
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).add_item(item)
+        assert item.status_code is None
+        assert item.success
+        assert item.exception_case is None
+        assert isinstance(item.value, CreditModel)
+        assert item.value.member_id == "1234567890"
+        assert item.value.status == "In Progress"
 
-    assert eval_points_conditions(condition_three, 610)
-    assert eval_points_conditions(condition_three, 1000)
-    assert not eval_points_conditions(condition_three, 600)
-    assert not eval_points_conditions(condition_three, 1001)
+    def test_credit_crud_add_item(self):
+        db = next(get_db())
+        item = CreditCreate(
+            member_id="1234567890",
+            amount=100,
+            first_name="You Xiang",
+            last_name="Teo",
+            airline_code="GJP",
+            email="ryzeros@gmail.com",
+            additional_info={}
 
+        )
+        item.set_partner_code("DBS")
 
-def test_calculate_points():
-    formula = "x + 600"
-    formula_two = "(1.5 * x) + 200"
-    formula_three = "1.5 * x"
+        item = CreditCRUD(db).add_item(item)
+        assert isinstance(item, CreditModel)
+        assert item.member_id == "1234567890"
+        assert item.status == "In Progress"
 
-    assert calculate_points(1000, formula) == 1600
-    assert calculate_points(1000, formula_two) == 1700
-    assert calculate_points(1000, formula_three) == 1500
+    def test_validate_airline_code(self):
+        db = next(get_db())
+        assert validate_airline_code("GJP", db)
+        assert not validate_airline_code("NON", db)
+
+    def test_validate_member_id(self):
+        db = next(get_db())
+        assert validate_member_id("1234567890", "GJP", db)
+        assert validate_member_id("1234567890123456", "GJP", db)
+        assert not validate_member_id("123456", "GJP", db)
+
+    def test_validate_promotions(self):
+        rule = {
+            "monthly_spending": {"op": "gt", "value": 1500},
+            "black_card_holder": {"op": "eq", "value": "true"}
+        }
+
+        valid_data = {
+            "monthly_spending": 2000,
+            "black_card_holder": "true"
+        }
+
+        invalid_data = {
+            "monthly_spending": 1000,
+            "black_card_holder": "true"
+        }
+
+        assert validate_promotions(rule, valid_data)
+        assert not validate_promotions(rule, invalid_data)
+
+    def test_eval_points_conditions(self):
+        condition = "600 < x < 1000"
+        condition_two = "x > 6000"
+        condition_three = "600 < x <= 1000"
+
+        assert eval_points_conditions(condition, 700)
+        assert not eval_points_conditions(condition, 100)
+        assert not eval_points_conditions(condition, 1000)
+
+        assert eval_points_conditions(condition_two, 6100)
+        assert not eval_points_conditions(condition_two, 5000)
+
+        assert eval_points_conditions(condition_three, 610)
+        assert eval_points_conditions(condition_three, 1000)
+        assert not eval_points_conditions(condition_three, 600)
+        assert not eval_points_conditions(condition_three, 1001)
+
+    def test_calculate_points(self):
+        formula = "x + 600"
+        formula_two = "(1.5 * x) + 200"
+        formula_three = "1.5 * x"
+
+        assert calculate_points(1000, formula) == 1600
+        assert calculate_points(1000, formula_two) == 1700
+        assert calculate_points(1000, formula_three) == 1500

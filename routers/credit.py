@@ -12,15 +12,15 @@ router = APIRouter(
 )
 
 
-@router.post("/get_all/", response_model=list[CreditItems])
-async def get_item(member_id: CreditMember, current_user: UserModel = Depends(require_role("partner")), db: get_db = Depends()):
+@router.post("/get_by_member_id/", response_model=list[CreditItems])
+async def get_by_member_id(member_id: CreditMember, current_user: UserModel = Depends(require_role("partner")), db: get_db = Depends()):
     member_id.set_partner_code(current_user.partner_code)
-    result = CreditService(db).get_items(member_id)
+    result = CreditService(db).get_by_member_id(member_id)
     return handle_result(result)
 
 
 @router.post("/get/", response_model=CreditItem)
-async def get_item(item: CreditReference, current_user: UserModel = Depends(require_role("partner")), db: get_db = Depends()):
+async def get_by_reference(item: CreditReference, current_user: UserModel = Depends(require_role("partner")), db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
     result = CreditService(db).get_item_by_reference(item)
     return handle_result(result)
@@ -42,7 +42,7 @@ async def delete_by_email(item: CreditEmail, current_user: UserModel = Depends(r
 
 
 @router.post("/get_by_email/", response_model=list[CreditItems])
-async def get_item(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
+async def get_by_email(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
                    db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
     result = CreditService(db).get_items_by_email(item)

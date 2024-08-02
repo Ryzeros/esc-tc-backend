@@ -12,10 +12,11 @@ from utils.promotion_misc import validate_promotions, eval_points_conditions, ca
 
 
 class CreditService(AppService):
-    def get_items(self, member_id: CreditMember) -> ServiceResult:
-        item = CreditCRUD(self.db).get_items(member_id)
+    def get_by_member_id(self, member_id: CreditMember) -> ServiceResult:
+        item = CreditCRUD(self.db).get_by_member_id(member_id)
         if not item:
-            return ServiceResult(AppException.GetItem({"member_id": member_id.member_id}))
+            return ServiceResult(AppException.GetItem({"member_id": member_id.member_id,
+                                                       "airline_code": member_id.airline_code}))
         return ServiceResult(item)
 
     def get_item_by_reference(self, reference: CreditReference) -> ServiceResult:
@@ -57,8 +58,9 @@ class CreditService(AppService):
 
 
 class CreditCRUD(AppCRUD):
-    def get_items(self, member_id: CreditMember) -> CreditModel:
+    def get_by_member_id(self, member_id: CreditMember) -> list[CreditModel]:
         item = self.db.query(CreditModel).filter(CreditModel.member_id == member_id.member_id,
+                                                 CreditModel.airline_code == member_id.airline_code,
                                                  CreditModel.partner_code == member_id.partner_code).all()
         if item:
             return item
@@ -137,4 +139,3 @@ class CreditCRUD(AppCRUD):
         if rows_del == 1:
             return CreditReferenceBoolean(reference=reference, boolean=True)
         return CreditReferenceBoolean(reference=reference, boolean=False)
-    

@@ -74,6 +74,7 @@ class CreditEmail(BaseModel):
 
 class CreditMember(BaseModel):
     member_id: str
+    airline_code: str
     _partner_code: str = PrivateAttr()
 
     @property

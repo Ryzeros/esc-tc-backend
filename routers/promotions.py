@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.post("/get_all/", response_model=list[PromotionBase])
+@router.post("/get_by_member_id/", response_model=list[PromotionBase])
 async def get_all_promotions(current_user: UserModel = Depends(require_role("partner")), db: get_db = Depends()):
     result = PromotionService(db).get_all_promotions_partner(current_user.partner_code)
     return handle_result(result)
