@@ -35,5 +35,5 @@ async def get_promotion_by_id(item: GetPromotionRequest, current_user: UserModel
 @router.post("/get_name_description", response_model=list[PromotionNameDescription])
 async def get_all_promotion_names(item: GetPromotionBasedOnPartner, current_user: UserModel = Depends(require_role("partner")),
                                   db: get_db = Depends()):
-    result = PromotionService(db).get_promotion_by_id(item.id)
+    result = PromotionService(db).get_all_promotion_names(item)
     return handle_result(result)
