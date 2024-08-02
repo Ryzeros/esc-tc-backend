@@ -4,7 +4,7 @@ from main import app
 from datetime import timedelta
 from config.database import get_db
 from services.credit import CreditService, CreditCRUD
-from schemas.credit import CreditCreate, CreditMember, CreditReference, CreditEmail, CreditEmailBoolean
+from schemas.credit import CreditCreate, CreditMember, CreditReference, CreditEmail, CreditEmailBoolean, CreditReferenceBoolean
 from models.credit import CreditModel
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 from utils.validators import validate_airline_code, validate_member_id
@@ -494,4 +494,60 @@ class TestDeleteByEmail:
         item = CreditCRUD(db).delete_by_email(item.email, item.partner_code)
         assert isinstance(item, CreditEmailBoolean)
         assert item.email == "ryzeros@gmail.com"
+        assert item.boolean
+
+
+class TestDeleteByReference:
+    def test_delete_by_reference_valid(self, client_with_cleanup):
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = add_data(client_with_cleanup, headers)
+        data = {
+            "reference": f"{add_response.json()['reference']}"
+        }
+        response = client_with_cleanup.post("/credit/delete_by_reference/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert response_data["reference"] == add_response.json()['reference']
+        assert response_data["boolean"]
+
+    def test_delete_by_reference_no_item(self, client_with_cleanup):
+        data = {
+            "reference": "b47bfecb-32b1-46ea-ddad-27edc30f8af1"
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        response = client_with_cleanup.post("/credit/delete_by_reference/", json=data, headers=headers)
+        assert response.status_code == 403
+        response_data = response.json()
+        assert response_data["detail"]["reference"] == "b47bfecb-32b1-46ea-ddad-27edc30f8af1"
+        assert not response_data["detail"]["boolean"]
+        assert response_data["detail"]["message"] == "No records with this reference"
+
+    def test_credit_service_delete_by_email(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = add_data(client_with_cleanup, headers)
+
+        item = CreditReference(
+            reference=add_response.json()["reference"]
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).delete_by_reference(item)
+        assert item.status_code is None
+        assert item.success
+        assert isinstance(item.value, CreditReferenceBoolean)
+        assert item.value.reference == add_response.json()["reference"]
+        assert item.value.boolean
+
+    def test_credit_crud_delete_by_reference(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = add_data(client_with_cleanup, headers)
+        item = CreditReference(
+            reference=add_response.json()["reference"]
+        )
+        item.set_partner_code("DBS")
+        item = CreditCRUD(db).delete_by_reference(item.reference, item.partner_code)
+        assert isinstance(item, CreditReferenceBoolean)
+        assert item.reference == add_response.json()["reference"]
         assert item.boolean

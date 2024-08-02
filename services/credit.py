@@ -56,8 +56,9 @@ class CreditService(AppService):
     def delete_by_reference(self, item: CreditReference) -> ServiceResult:
         outcome = CreditCRUD(self.db).delete_by_reference(item.reference, item.partner_code)
         if not outcome.boolean:
+            outcome = outcome.model_dump()
             outcome["message"] = "No records with this reference"
-            return ServiceResult(AppException.DeleteItem(dict(outcome)))
+            return ServiceResult(AppException.DeleteItem(outcome))
         return ServiceResult(outcome)
 
 

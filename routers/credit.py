@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from services.credit import CreditService
-from schemas.credit import CreditItem, CreditCreate, CreditItems, CreditEmailBoolean, CreditMember, CreditEmail, CreditReference
+from schemas.credit import CreditItem, CreditCreate, CreditItems, CreditEmailBoolean, CreditReferenceBoolean, CreditMember, CreditEmail, CreditReference
 from utils.service_result import handle_result
 from config.database import get_db
 from utils.credentials_misc import require_role
@@ -49,7 +49,7 @@ async def get_by_email(item: CreditEmail, current_user: UserModel = Depends(requ
     return handle_result(result)
 
 
-@router.post("/delete_by_reference/", response_model=CreditReference)
+@router.post("/delete_by_reference/", response_model=CreditReferenceBoolean)
 async def delete_by_reference(item: CreditReference, current_user: UserModel = Depends(require_role("partner")),
                               db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
