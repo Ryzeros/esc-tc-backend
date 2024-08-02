@@ -4,7 +4,7 @@ from main import app
 from datetime import timedelta
 from config.database import get_db
 from services.credit import CreditService, CreditCRUD
-from schemas.credit import CreditCreate, CreditMember
+from schemas.credit import CreditCreate, CreditMember, CreditReference
 from models.credit import CreditModel
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 from utils.validators import validate_airline_code, validate_member_id
@@ -37,7 +37,7 @@ def cleanup(headers):
 
 
 class TestGetByEmailAirlineCode:
-    def test_get_by_member_id_invalid(self, client_with_cleanup):
+    def test_get_by_member_id_valid(self, client_with_cleanup):
         input_data = {
             "member_id": "0987654321",
             "amount": 100,
@@ -329,3 +329,96 @@ class TestAddCredit:
         assert calculate_points(1000, formula) == 1600
         assert calculate_points(1000, formula_two) == 1700
         assert calculate_points(1000, formula_three) == 1500
+
+
+class TestGetByReference:
+    def test_get_by_reference_valid(self, client_with_cleanup):
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
+
+        data = {
+            "reference": f"{add_response.json()['reference']}",
+        }
+        response = client_with_cleanup.post("/credit/get_by_reference/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert isinstance(response_data, dict)
+        assert response_data['reference'] == add_response.json()['reference']
+
+    def test_get_by_reference_no_item(self, client_with_cleanup):
+        data = {
+            "reference": f"b47bfecb-32b1-46ea-ddad-27edc30f8af1",
+        }
+        client_with_cleanup, headers = client_with_cleanup
+
+        response = client_with_cleanup.post("/credit/get_by_reference/", json=data, headers=headers)
+        assert response.status_code == 404
+
+    def test_get_by_reference_invalid_reference(self, client_with_cleanup):
+        data = {
+            "reference": f"b47bfecb-32b1-46ea-da-27edc30f8af1",
+        }
+        client_with_cleanup, headers = client_with_cleanup
+
+        response = client_with_cleanup.post("/credit/get_by_reference/", json=data, headers=headers)
+        assert response.status_code == 404
+
+    def test_credit_service_get_by_reference(self, client_with_cleanup):
+        db = next(get_db())
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
+
+        item = CreditReference(
+            reference=f"{add_response.json()['reference']}"
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).get_item_by_reference(reference=item)
+        assert item.status_code is None
+        assert item.success
+        assert item.exception_case is None
+        assert str(item.value.reference) == add_response.json()["reference"]
+
+    def test_credit_crud_get_by_reference(self, client_with_cleanup):
+        db = next(get_db())
+        input_data = {
+            "member_id": "0987654321",
+            "amount": 100,
+            "first_name": "You Xiang",
+            "last_name": "Teo",
+            "airline_code": "GJP",
+            "email": "ryzeros@gmail.com",
+            "additional_info": {}
+        }
+
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        assert add_response.status_code == 200
+
+        item = CreditReference(
+            reference=f"{add_response.json()['reference']}"
+        )
+        item.set_partner_code("DBS")
+        item = CreditCRUD(db).get_item_by_reference(reference=item)
+        assert str(item.reference) == add_response.json()["reference"]

@@ -24,6 +24,6 @@ class GetPromotionBasedOnPartner(BaseModel):
     partner_code: str
 
 
-class PromotionNameDescription(BaseModel):
+class PromotionNameDescription(GetPromotionRequest):
     name: str
     description: str

@@ -4,7 +4,7 @@ from utils.service_result import ServiceResult
 from services.main import AppService, AppCRUD
 from utils.app_exceptions import AppException
 from utils.misc import generate_reference
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from datetime import datetime
 from utils.validators import validate_member_id, validate_airline_code
 from services.promotions import PromotionCRUD
@@ -20,10 +20,13 @@ class CreditService(AppService):
         return ServiceResult(item)
 
     def get_item_by_reference(self, reference: CreditReference) -> ServiceResult:
-        item = CreditCRUD(self.db).get_item_by_reference(reference)
-        if not item:
+        try:
+            item = CreditCRUD(self.db).get_item_by_reference(reference)
+            if not item:
+                return ServiceResult(AppException.GetItem({"reference": reference.reference}))
+            return ServiceResult(item)
+        except DataError:
             return ServiceResult(AppException.GetItem({"reference": reference.reference}))
-        return ServiceResult(item)
 
     def add_item(self, item: CreditCreate) -> ServiceResult:
         if not validate_airline_code(item.airline_code, self.db):
