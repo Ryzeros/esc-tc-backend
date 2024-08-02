@@ -137,3 +137,4 @@ class CreditCRUD(AppCRUD):
         if rows_del == 1:
             return CreditReferenceBoolean(reference=reference, boolean=True)
         return CreditReferenceBoolean(reference=reference, boolean=False)
+    
