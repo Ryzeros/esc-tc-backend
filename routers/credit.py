@@ -35,7 +35,7 @@ async def add_item(item: CreditCreate, current_user: UserModel = Depends(require
 
 @router.post("/delete_by_email/", response_model=CreditEmailBoolean)
 async def delete_by_email(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
-                         db: get_db = Depends()):
+                          db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
     result = CreditService(db).delete_by_email(item)
     return handle_result(result)
@@ -43,7 +43,7 @@ async def delete_by_email(item: CreditEmail, current_user: UserModel = Depends(r
 
 @router.post("/get_by_email/", response_model=list[CreditItems])
 async def get_by_email(item: CreditEmail, current_user: UserModel = Depends(require_role("partner")),
-                   db: get_db = Depends()):
+                       db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
     result = CreditService(db).get_items_by_email(item)
     return handle_result(result)

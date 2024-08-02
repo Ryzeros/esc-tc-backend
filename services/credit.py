@@ -39,17 +39,18 @@ class CreditService(AppService):
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
 
-    def get_items_by_email(self, item: CreditEmail) -> ServiceResult:
-        item = CreditCRUD(self.db).get_items_by_email(item)
+    def get_items_by_email(self, email: CreditEmail) -> ServiceResult:
+        item = CreditCRUD(self.db).get_items_by_email(email)
         if not item:
-            return ServiceResult(AppException.GetItem({"email": item.email}))
+            return ServiceResult(AppException.GetItem({"email": email.email}))
         return ServiceResult(item)
 
     def delete_by_email(self, item: CreditEmail) -> ServiceResult:
         outcome = CreditCRUD(self.db).delete_by_email(item.email, item.partner_code)
         if not outcome.boolean:
+            outcome = outcome.model_dump()
             outcome["message"] = "No records with this email"
-            return ServiceResult(AppException.DeleteItem(dict(outcome)))
+            return ServiceResult(AppException.DeleteItem(outcome))
         return ServiceResult(outcome)
 
     def delete_by_reference(self, item: CreditReference) -> ServiceResult:

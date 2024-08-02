@@ -4,7 +4,7 @@ from main import app
 from datetime import timedelta
 from config.database import get_db
 from services.credit import CreditService, CreditCRUD
-from schemas.credit import CreditCreate, CreditMember, CreditReference
+from schemas.credit import CreditCreate, CreditMember, CreditReference, CreditEmail
 from models.credit import CreditModel
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 from utils.validators import validate_airline_code, validate_member_id
@@ -36,25 +36,30 @@ def cleanup(headers):
     client.post("/credit/delete_by_email/", json=data, headers=headers)
 
 
+def add_data(client_, headers):
+    input_data = {
+        "member_id": "0987654321",
+        "amount": 100,
+        "first_name": "You Xiang",
+        "last_name": "Teo",
+        "airline_code": "GJP",
+        "email": "ryzeros@gmail.com",
+        "additional_info": {}
+    }
+    add_response = client_.post("/credit/add/", json=input_data, headers=headers)
+    assert add_response.status_code == 200
+
+    return add_response
+
+
 class TestGetByEmailAirlineCode:
     def test_get_by_member_id_valid(self, client_with_cleanup):
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
-
         data = {
             "member_id": "0987654321",
             "airline_code": "GJP"
         }
         client_with_cleanup, headers = client_with_cleanup
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
-        assert add_response.status_code == 200
+        add_response = add_data(client_with_cleanup, headers)
 
         response = client_with_cleanup.post("/credit/get_by_member_id/", json=data, headers=headers)
         assert response.status_code == 200
@@ -89,18 +94,9 @@ class TestGetByEmailAirlineCode:
 
     def test_credit_service_get_by_member_id(self, client_with_cleanup):
         db = next(get_db())
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
         client_with_cleanup, headers = client_with_cleanup
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
-        assert add_response.status_code == 200
+        add_response = add_data(client_with_cleanup, headers)
+
         item = CreditMember(
             member_id="0987654321",
             airline_code="GJP"
@@ -116,18 +112,9 @@ class TestGetByEmailAirlineCode:
 
     def test_credit_crud_get_by_member_id(self, client_with_cleanup):
         db = next(get_db())
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
         client_with_cleanup, headers = client_with_cleanup
         cleanup(headers)
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
+        add_response = add_data(client_with_cleanup, headers)
         assert add_response.status_code == 200
         item = CreditMember(
             member_id="0987654321",
@@ -333,19 +320,8 @@ class TestAddCredit:
 
 class TestGetByReference:
     def test_get_by_reference_valid(self, client_with_cleanup):
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
-
         client_with_cleanup, headers = client_with_cleanup
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
-        assert add_response.status_code == 200
+        add_response = add_data(client_with_cleanup, headers)
 
         data = {
             "reference": f"{add_response.json()['reference']}",
@@ -376,19 +352,8 @@ class TestGetByReference:
 
     def test_credit_service_get_by_reference(self, client_with_cleanup):
         db = next(get_db())
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
-
         client_with_cleanup, headers = client_with_cleanup
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
-        assert add_response.status_code == 200
+        add_response = add_data(client_with_cleanup, headers)
 
         item = CreditReference(
             reference=f"{add_response.json()['reference']}"
@@ -402,19 +367,8 @@ class TestGetByReference:
 
     def test_credit_crud_get_by_reference(self, client_with_cleanup):
         db = next(get_db())
-        input_data = {
-            "member_id": "0987654321",
-            "amount": 100,
-            "first_name": "You Xiang",
-            "last_name": "Teo",
-            "airline_code": "GJP",
-            "email": "ryzeros@gmail.com",
-            "additional_info": {}
-        }
-
         client_with_cleanup, headers = client_with_cleanup
-        add_response = client_with_cleanup.post("/credit/add/", json=input_data, headers=headers)
-        assert add_response.status_code == 200
+        add_response = add_data(client_with_cleanup, headers)
 
         item = CreditReference(
             reference=f"{add_response.json()['reference']}"
@@ -422,3 +376,67 @@ class TestGetByReference:
         item.set_partner_code("DBS")
         item = CreditCRUD(db).get_item_by_reference(reference=item)
         assert str(item.reference) == add_response.json()["reference"]
+
+
+class TestGetByEmail:
+
+    def test_get_by_email_valid(self, client_with_cleanup):
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        add_response = add_data(client_with_cleanup, headers)
+        data = {
+            "email": "ryzeros@gmail.com",
+        }
+        response = client_with_cleanup.post("/credit/get_by_email/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert isinstance(response_data, list)
+        assert len(response_data) == 1
+        assert response_data[0]['reference'] == add_response.json()['reference']
+
+    def test_get_by_email_invalid(self, client_with_cleanup):
+        client_with_cleanup, headers = client_with_cleanup
+        data = {
+            "email": 12345678,
+        }
+        response = client_with_cleanup.post("/credit/get_by_email/", json=data, headers=headers)
+        assert response.status_code == 422
+
+    def test_get_by_email_no_item(self, client_with_cleanup):
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        data = {
+            "email": "ryzeros@gmail.com",
+        }
+        response = client_with_cleanup.post("/credit/get_by_email/", json=data, headers=headers)
+        assert response.status_code == 404
+
+    def test_credit_service_get_by_email(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        add_response = add_data(client_with_cleanup, headers)
+        item = CreditEmail(
+            email="ryzeros@gmail.com"
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).get_items_by_email(item)
+        assert item.status_code is None
+        assert item.success
+        assert item.exception_case is None
+        assert isinstance(item.value, list)
+        assert len(item.value) == 1
+        assert str(item.value[0].reference) == add_response.json()["reference"]
+
+    def test_credit_crud_get_by_email(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        add_response = add_data(client_with_cleanup, headers)
+        assert add_response.status_code == 200
+        item = CreditEmail(
+            email="ryzeros@gmail.com"
+        )
+        item.set_partner_code("DBS")
+        item = CreditCRUD(db).get_items_by_email(item)
+        assert len(item) == 1
+        assert str(item[0].reference) == add_response.json()["reference"]
