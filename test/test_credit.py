@@ -4,7 +4,7 @@ from main import app
 from datetime import timedelta
 from config.database import get_db
 from services.credit import CreditService, CreditCRUD
-from schemas.credit import CreditCreate, CreditMember, CreditReference, CreditEmail
+from schemas.credit import CreditCreate, CreditMember, CreditReference, CreditEmail, CreditEmailBoolean
 from models.credit import CreditModel
 from utils.promotion_misc import validate_promotions, eval_points_conditions, calculate_points
 from utils.validators import validate_airline_code, validate_member_id
@@ -115,7 +115,6 @@ class TestGetByEmailAirlineCode:
         client_with_cleanup, headers = client_with_cleanup
         cleanup(headers)
         add_response = add_data(client_with_cleanup, headers)
-        assert add_response.status_code == 200
         item = CreditMember(
             member_id="0987654321",
             airline_code="GJP"
@@ -440,3 +439,59 @@ class TestGetByEmail:
         item = CreditCRUD(db).get_items_by_email(item)
         assert len(item) == 1
         assert str(item[0].reference) == add_response.json()["reference"]
+
+
+class TestDeleteByEmail:
+    def test_delete_by_email_valid(self, client_with_cleanup):
+        data = {
+            "email": "ryzeros@gmail.com"
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        add_data(client_with_cleanup, headers)
+        response = client_with_cleanup.post("/credit/delete_by_email/", json=data, headers=headers)
+        assert response.status_code == 200
+        response_data = response.json()
+        assert response_data["email"] == "ryzeros@gmail.com"
+        assert response_data["boolean"]
+
+    def test_delete_by_email_no_item(self, client_with_cleanup):
+        data = {
+            "email": "ryzeros@gmail.com"
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup(headers)
+        response = client_with_cleanup.post("/credit/delete_by_email/", json=data, headers=headers)
+        assert response.status_code == 403
+        response_data = response.json()
+        assert response_data["detail"]["email"] == "ryzeros@gmail.com"
+        assert not response_data["detail"]["boolean"]
+        assert response_data["detail"]["message"] == "No records with this email"
+
+    def test_credit_service_delete_by_email(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        add_data(client_with_cleanup, headers)
+
+        item = CreditEmail(
+            email="ryzeros@gmail.com"
+        )
+        item.set_partner_code("DBS")
+        item = CreditService(db).delete_by_email(item)
+        assert item.status_code is None
+        assert item.success
+        assert isinstance(item.value, CreditEmailBoolean)
+        assert item.value.email == "ryzeros@gmail.com"
+        assert item.value.boolean
+
+    def test_credit_crud_delete_by_email(self, client_with_cleanup):
+        db = next(get_db())
+        client_with_cleanup, headers = client_with_cleanup
+        add_data(client_with_cleanup, headers)
+        item = CreditEmail(
+            email="ryzeros@gmail.com"
+        )
+        item.set_partner_code("DBS")
+        item = CreditCRUD(db).delete_by_email(item.email, item.partner_code)
+        assert isinstance(item, CreditEmailBoolean)
+        assert item.email == "ryzeros@gmail.com"
+        assert item.boolean

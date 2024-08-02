@@ -49,7 +49,7 @@ async def get_by_email(item: CreditEmail, current_user: UserModel = Depends(requ
     return handle_result(result)
 
 
-@router.post("/delete_by_reference/", response_model=CreditEmailBoolean)
+@router.post("/delete_by_reference/", response_model=CreditReference)
 async def delete_by_reference(item: CreditReference, current_user: UserModel = Depends(require_role("partner")),
                               db: get_db = Depends()):
     item.set_partner_code(current_user.partner_code)
