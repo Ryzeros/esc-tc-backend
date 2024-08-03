@@ -91,6 +91,7 @@ class CreditCRUD(AppCRUD):
                                                                                      partner_code=item.partner_code)
         else:
             promotions_items = PromotionCRUD(self.db).get_promotion_by_id(promotion_id=item.promotion_id)
+            promotions_items = list(promotions_items)
 
         item = CreditModel(member_id=item.member_id,
                            first_name=item.first_name,
