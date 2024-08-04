@@ -19,7 +19,7 @@ async def get_all(db: get_db = Depends()):
     return handle_result(result)
 
 
-@router.post("/add", response_model=LoyaltyItem)
+@router.post("/add/", response_model=LoyaltyItem)
 async def add(item: LoyaltyValidate, current_user: UserModel = Depends(require_role("admin")),
               db: get_db = Depends()):
     result = LoyaltyService(db).add_item(item)

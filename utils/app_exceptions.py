@@ -31,7 +31,7 @@ class AppException(object):
             """
             Item creation failed
             """
-            status_code = 500
+            status_code = 400
             AppExceptionCase.__init__(self, status_code, context)
 
     class InvalidItem(AppExceptionCase):
