@@ -27,14 +27,8 @@ class PromotionService(AppService):
             return ServiceResult(AppException.AddItem())
         return ServiceResult(item)
 
-    def get_airline_partner_promotions(self, airline_code: str, partner_code: str) -> ServiceResult:
-        item = PromotionCRUD(self.db).get_airline_partner_promotions(airline_code, partner_code)
-        if not item:
-            return ServiceResult(AppException.GetItem())
-        return ServiceResult(item)
-
-    def get_all_promotion_names(self, item: GetPromotionBasedOnPartner) -> ServiceResult:
-        item = PromotionCRUD(self.db).get_all_promotion_names(item.partner_code)
+    def get_all_promotion_names(self, partner_code: str) -> ServiceResult:
+        item = PromotionCRUD(self.db).get_all_promotion_names(partner_code)
         if not item:
             return ServiceResult(AppException.GetItem())
         return ServiceResult(item)

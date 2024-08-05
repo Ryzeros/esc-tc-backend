@@ -10,7 +10,9 @@ from main import app
 from models.user import UserModel
 from services.user import UserService, UserCRUD
 from schemas.user import UserRegisterRequest
-from utils.credentials_misc import *
+from fastapi.exceptions import HTTPException
+from utils.credentials_misc import create_access_token, verify_password, get_password_hash, get_current_active_user, get_current_user, require_role
+
 
 client = TestClient(app)
 
