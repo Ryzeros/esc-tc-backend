@@ -250,8 +250,24 @@ class TestAddCredit:
             last_name="Teo",
             airline_code="GJP",
             email="ryzeros@gmail.com",
-            additional_info={}
+            additional_info={},
+        )
+        item.set_partner_code("DBS")
 
+        item = CreditCRUD(db).add_item(item)
+        assert isinstance(item, CreditModel)
+        assert item.member_id == "1234567890"
+        assert item.status == "In Progress"
+
+        item = CreditCreate(
+            member_id="1234567890",
+            amount=100,
+            first_name="You Xiang",
+            last_name="Teo",
+            airline_code="GJP",
+            email="ryzeros@gmail.com",
+            additional_info={},
+            promotion_id=8
         )
         item.set_partner_code("DBS")
 
