@@ -498,6 +498,8 @@ class TestDeleteByEmail:
         assert isinstance(item.value, CreditEmailBoolean)
         assert item.value.email == "ryzeros@gmail.com"
         assert item.value.boolean
+        assert str(item) == "[Success]"
+        assert repr(item) == "<ServiceResult Success>"
 
     def test_credit_crud_delete_by_email(self, client_with_cleanup):
         db = next(get_db())

@@ -138,6 +138,8 @@ class TestGetNameDescription:
 
         resp = PromotionService(db).get_all_promotion_names("DONT EXIST")
         assert resp.status_code == 404
+        assert str(resp) == '[Exception] "GetItem"'
+        assert repr(resp) == "<ServiceResult AppException GetItem>"
 
     def test_promotion_crud_get_name_description(self):
         db = next(get_db())
