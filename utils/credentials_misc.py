@@ -5,7 +5,6 @@ from fastapi import Depends, HTTPException, status
 from config.credentials_config import SECRET_KEY, ALGORITHM, oauth2_scheme
 from config.database import get_db
 from models.user import UserModel
-from schemas.user import UserTokenData, PartnerCode
 import jwt
 
 
@@ -46,7 +45,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: get_db = Dep
         email: str = payload.get("email")
         if email is None:
             raise credentials_exception
-        token_data = UserTokenData(email=email)
     except jwt.ExpiredSignatureError:
         raise expired_exception
     except jwt.PyJWTError:

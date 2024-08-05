@@ -1,18 +1,16 @@
-import pytest
-from main import app
 import base64
-import json
-from datetime import timedelta
-from config.database import get_db
-from fastapi.testclient import TestClient
-from models.user import UserModel
-from utils.credentials_misc import create_access_token
 import binascii
-from fastapi.security import OAuth2PasswordRequestForm
+import json
+import time
+from datetime import timedelta
+import pytest
+from fastapi.testclient import TestClient
+from config.database import get_db
+from main import app
+from models.user import UserModel
 from services.user import UserService, UserCRUD
-from utils.credentials_misc import verify_password, create_access_token
-
-
+from schemas.user import UserRegisterRequest
+from utils.credentials_misc import *
 
 client = TestClient(app)
 
@@ -142,3 +140,160 @@ class TestCreateUser:
         assert response.status_code == 200
         assert response.json()["email"] == "ryzroz@gmail.com"
 
+    def test_signup_password_dont_match(self, client_with_cleanup):
+        data = {
+            "email": "ryzroz@gmail.com",
+            "password": "P@ssw0rd",
+            "confirm_password": "P2@ssw0rd",
+            "roles": "user,partner",
+            "partner_code": "ABC"
+        }
+        client_with_cleanup, headers = client_with_cleanup
+        response = client_with_cleanup.post("/user/signup", json=data, headers=headers)
+        assert response.status_code == 400
+        assert response.json()["detail"]["error"] == "password and confirm password don't match"
+
+    def test_user_service_signup(self):
+        db = next(get_db())
+        cleanup()
+        data = UserRegisterRequest(
+            email="ryzroz@gmail.com",
+            password="P@ssw0rd",
+            confirm_password="P@ssw0rd",
+            roles="user,admin"
+        )
+        response = UserService(db).signup(data)
+        assert response.status_code is None
+        assert response.success
+        assert response.value.email == "ryzroz@gmail.com"
+
+    def test_user_crud_signup(self):
+        db = next(get_db())
+        cleanup()
+        data = UserRegisterRequest(
+            email="ryzroz@gmail.com",
+            password="P@ssw0rd",
+            confirm_password="P@ssw0rd",
+            roles="user,admin"
+        )
+        response = UserCRUD(db).signup(data)
+        assert isinstance(response, UserModel)
+        assert response.email == "ryzroz@gmail.com"
+
+    def test_get_password_hash(self):
+        item = get_password_hash("P@ssw0rd")
+        assert verify_password("P@ssw0rd", item)
+        assert not verify_password("P@sword", item)
+        item_1 = get_password_hash("Password")
+        assert verify_password("Password", item_1)
+        assert not verify_password("Pass", item_1)
+
+
+class TestGetMe:
+    def test_get_me_valid(self, client_with_cleanup):
+        client_with_cleanup, header = client_with_cleanup
+        resp = client_with_cleanup.post("/user/me", headers=header)
+        assert resp.status_code == 200
+        assert resp.json()["email"] == "ryzeros@gmail.com"
+        assert resp.json()["roles"] == "user,admin"
+        
+    def test_get_me_invalid(self, client_with_cleanup):
+        client_with_cleanup, header = client_with_cleanup
+        resp = client_with_cleanup.post("/user/me")
+        assert resp.status_code == 401
+        assert resp.json()["detail"] == "Not authenticated"
+
+
+class TestCredentialsMisc:
+    @pytest.mark.asyncio
+    async def test_get_current_user_valid(self):
+        data = {"email": "ryzeros@gmail.com"}
+        token = create_access_token(data, timedelta(minutes=5))
+        user = await get_current_user(token, db=next(get_db()))
+        assert user.email == "ryzeros@gmail.com"
+        assert user.roles == "user,admin"
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_invalid(self):
+        data = {"email": "ryzeros1@gmail.com"}
+        token = create_access_token(data, timedelta(minutes=5))
+        with pytest.raises(HTTPException) as exception_info:
+            await get_current_user(token, db=next(get_db()))
+        assert exception_info.value.status_code == 401
+        assert exception_info.value.detail == "Could not validate credentials"
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_expired(self):
+        data = {"email": "ryzeros@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        time.sleep(2)
+        with pytest.raises(HTTPException) as exception_info:
+            await get_current_user(token, db=next(get_db()))
+        assert exception_info.value.status_code == 401
+        assert exception_info.value.detail == "Expired token"
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_jwt_error(self):
+        token = "ASDASCREGERF"
+        with pytest.raises(HTTPException) as exception_info:
+            await get_current_user(token, db=next(get_db()))
+        assert exception_info.value.status_code == 401
+        assert exception_info.value.detail == "Could not validate credentials"
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_no_email(self):
+        data = {"not_email": "ryzeros@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        with pytest.raises(HTTPException) as exception_info:
+            await get_current_user(token, db=next(get_db()))
+        assert exception_info.value.status_code == 401
+        assert exception_info.value.detail == "Could not validate credentials"
+
+    @pytest.mark.asyncio
+    async def test_get_current_active_user_(self, client_with_cleanup):
+        data = {"email": "ryzroz@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        user = await get_current_active_user(await get_current_user(token, next(get_db())))
+        assert user.email == "ryzroz@gmail.com"
+
+    @pytest.mark.asyncio
+    async def test_get_current_active_user_disabled(self, client_with_cleanup):
+        client_with_cleanup, headers = client_with_cleanup
+        cleanup()
+        data = {
+            "email": "ryzroz@gmail.com",
+            "password": "P@ssw0rd",
+            "confirm_password": "P@ssw0rd",
+            "roles": "user,partner",
+            "partner_code": "ABC"
+        }
+        response = client_with_cleanup.post("/user/signup", json=data, headers=headers)
+        assert response.status_code == 200
+        assert response.json()["email"] == "ryzroz@gmail.com"
+        db = next(get_db())
+        db.query(UserModel).filter(UserModel.email == "ryzroz@gmail.com").update({"disabled": True})
+        db.commit()
+        data = {"email": "ryzroz@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        with pytest.raises(HTTPException) as exception_info:
+            await get_current_active_user(await get_current_user(token, next(get_db())))
+        assert exception_info.value.status_code == 400
+        assert exception_info.value.detail == "Inactive user"
+        db.query(UserModel).filter(UserModel.email == "ryzroz@gmail.com").update({"disabled": False})
+        db.commit()
+
+    @pytest.mark.asyncio
+    async def test_require_role_invalid(self, client_with_cleanup):
+        data = {"email": "ryzroz@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        with pytest.raises(HTTPException) as exception_info:
+            await require_role("admin")(await get_current_active_user(await get_current_user(token, next(get_db()))))
+        assert exception_info.value.status_code == 403
+        assert exception_info.value.detail == "Insufficient permissions"
+
+    @pytest.mark.asyncio
+    async def test_require_role_valid(self, client_with_cleanup):
+        data = {"email": "ryzeros@gmail.com"}
+        token = create_access_token(data, timedelta(seconds=1))
+        user = await require_role("admin")(await get_current_active_user(await get_current_user(token, next(get_db()))))
+        assert user.email == "ryzeros@gmail.com"
