@@ -181,6 +181,16 @@ class TestCreateUser:
         response = UserCRUD(db).signup(data)
         assert isinstance(response, UserModel)
         assert response.email == "ryzroz@gmail.com"
+        cleanup()
+        data = UserRegisterRequest(
+            email="ryzroz@gmail.com",
+            password="P@ssw0rd",
+            confirm_password="P@ssw0rd",
+        )
+        response = UserCRUD(db).signup(data)
+        assert isinstance(response, UserModel)
+        assert response.email == "ryzroz@gmail.com"
+        assert response.roles == "user"
 
     def test_get_password_hash(self):
         item = get_password_hash("P@ssw0rd")
