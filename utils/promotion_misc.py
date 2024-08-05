@@ -29,8 +29,6 @@ def eval_points_conditions(condition: str, x: float):
             left_result = left_value > x
         elif left_operator == ">=":
             left_result = left_value >= x
-        else:
-            raise ValueError(f"Unsupported operator: {left_operator}")
 
         if right_operator == "<":
             right_result = x < right_value
@@ -40,8 +38,6 @@ def eval_points_conditions(condition: str, x: float):
             right_result = x > right_value
         elif right_operator == ">=":
             right_result = x >= right_value
-        else:
-            raise ValueError(f"Unsupported operator: {right_operator}")
 
         return left_result and right_result
 
@@ -65,7 +61,6 @@ def eval_points_conditions(condition: str, x: float):
     else:
         raise ValueError(f"Invalid condition format: {condition}")
 
-    return False
 
 
 def calculate_points(x_val: int, formula: str):

@@ -4,7 +4,6 @@ from pydantic import BaseModel, PrivateAttr
 
 
 class PromotionBase(BaseModel):
-    id: int
     name: str
     description: str
     airline_code: str
@@ -14,6 +13,10 @@ class PromotionBase(BaseModel):
     conditions: dict[str, dict[str, Any]]
     start_date_for_card: datetime
     end_date_for_card: datetime
+
+
+class GetPromotionResponse(PromotionBase):
+    id: int
 
 
 class GetPromotionRequest(BaseModel):
