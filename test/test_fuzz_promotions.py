@@ -1,4 +1,4 @@
-from utils.promotion_misc import eval_points_conditions, validate_promotions, calculate_points
+from utils.promotion_misc import validate_promotions
 
 from hypothesis import given, strategies as st
 import pytest
@@ -16,10 +16,13 @@ def test_validate_promotions():
         data=st.dictionaries(keys=st.text(), values=st.integers())
     )
     def inner_test(rules, data):
+        print(f"Testing with rules: {rules} and data: {data}")
         try:
             result = validate_promotions(rules, data)
+            print(f"Result: {result}")
             assert isinstance(result, bool)
         except Exception as e:
+            print(f"Exception occurred: {e}")
             assert False, f"Exception occurred: {e}"
 
     inner_test()
