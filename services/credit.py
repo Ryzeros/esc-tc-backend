@@ -107,15 +107,6 @@ class CreditCRUD(AppCRUD):
         if promotions_items:
             max_point = [item.amount, 0]
             for promo_item in promotions_items:
-                if promo_item.conditions.get("first_time_transact", None) is not None:
-                    member = CreditMember(
-                        member_id=item.member_id,
-                        airline_code=item.airline_code
-                    )
-                    member.set_partner_code(item.partner_code)
-                    first_time_transaction = CreditCRUD(self.db).get_by_member_id(member)
-                    if first_time_transaction is not None:
-                        continue
                 if validate_promotions(promo_item.conditions, item.additional_info):
                     for condition, formula in promo_item.points_rule["point_condition"]:
                         if eval_points_conditions(condition, item.amount):
