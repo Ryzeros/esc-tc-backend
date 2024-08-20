@@ -1,4 +1,10 @@
 # Ascenda's Loyalty Points Marketplace
+This was part of our SUTD module, Elements of Software Construction, where we selected a project out of the few different projects and develop a software for them. Our team has ultimately chose to work on Ascenda's Loyalty Points Marketplace or TransferConnect. This Github repository is used for TransferConnect, managing API requests from banks and partners. The features/requirements are explained below and exists somewhere in this repository. Feature 6 is not in this repository as it was initially created in a different repository meant to store our parsers and scripts.
+
+To ensure robustness in our promotion system, the promotion rules are stored in our database as a json format with additional information such as name, description, expiry date etc. 
+<img width="1139" alt="image" src="https://github.com/user-attachments/assets/a5937ef2-8dd2-4a5e-b5fd-15f055f44130">
+
+
 ## Loyalty Points Marketplace
 There are 3 parties at play here; for which you’ll build 2 apps only:
 1. The Bank app
