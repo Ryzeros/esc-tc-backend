@@ -1,6 +1,7 @@
 # Ascenda's Loyalty Points Marketplace
 This was part of our SUTD module, Elements of Software Construction, where we selected a project out of the few different projects and develop a software for them. Our team has ultimately chose to work on Ascenda's Loyalty Points Marketplace or TransferConnect. This Github repository is used for TransferConnect, managing API requests from banks and partners. The features/requirements are explained below and exists somewhere in this repository. Feature 6 is not in this repository as it was initially created in a different repository meant to store our parsers and scripts.
 
+### Promotions implementation
 To ensure robustness in our promotion system, the promotion rules are stored in our database as a json format with additional information such as name, description, expiry date etc. During the credit request, if the promotion ID is not specified, we will select the best value out of all the promotions. Some of the promotions criteria that we are able to do now.
 - Check if user has a certain card
 - Check if user has enough spending on certain card
@@ -12,6 +13,11 @@ When the banks send in a request with the additional information needed, we use 
 After the condition check, we will then evaluate the points in **points_rule**. The value is an array of different formulas for different points that they are exchanging for. For example, for the first row, if the points that you are exchanging for is below 900, it will add an additional 500 points, thus x + 500. However, if you are exchanging more than 900 points, it will be using the other formula, which is (x-900) * 1.5 + 500, which basically does a 1.5 multipler on additional points after 900 points.
 
 <img width="1139" alt="image" src="https://github.com/user-attachments/assets/a5937ef2-8dd2-4a5e-b5fd-15f055f44130">
+
+### Security implementation
+To ensure that the people using the API are authentic users, we decided to use JWT tokens that has a email payload, then subsequently API calls will check the DB if the email exist, and what are the roles. Different API calls require different roles as well to provide a role-based authentication. The credit API calls would require you to be a partner, and then we will automatically select their partner_code so that they cannot randomly change their partner code. Password is hashed with bcrypt so that it cannot easily be decrypted. The JWT token expires in every 1 minute currently so that even if the JWT get stolen, it would have expired and unusable. 
+<img width="733" alt="image" src="https://github.com/user-attachments/assets/e4466617-7637-4cd3-b8ae-07f3bab25909">
+
 
 
 ## Loyalty Points Marketplace
