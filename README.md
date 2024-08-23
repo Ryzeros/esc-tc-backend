@@ -6,7 +6,7 @@ To ensure robustness in our promotion system, the promotion rules are stored in 
 - Check if user has a certain card
 - Check if user has enough spending on certain card
 - Check if user has enough spending on certain months on certain cards
-We also planned for checking for first time transaction etc but have not implemented that yet due to time constrains and were not able to test it out fully.
+- We also planned for checking for first time transaction etc but have not implemented that yet due to time constrains and were not able to test it out fully.
 
 When the banks send in a request with the additional information needed, we use that to match the key in the **conditions** then we have a "op" to check for the formula (gt = greater than, lt = less than, eq = equal, lte = less than or equal) etc, and match the "value". The key is usually the card name.
 
@@ -15,7 +15,9 @@ After the condition check, we will then evaluate the points in **points_rule**. 
 <img width="1139" alt="image" src="https://github.com/user-attachments/assets/a5937ef2-8dd2-4a5e-b5fd-15f055f44130">
 
 ### Security implementation
-To ensure that the people using the API are authentic users, we decided to use JWT tokens that has a email payload, then subsequently API calls will check the DB if the email exist, and what are the roles. Different API calls require different roles as well to provide a role-based authentication. The credit API calls would require you to be a partner, and then we will automatically select their partner_code so that they cannot randomly change their partner code. Password is hashed with bcrypt so that it cannot easily be decrypted. The JWT token expires in every 1 minute currently so that even if the JWT get stolen, it would have expired and unusable. 
+To ensure that the people using the API are authentic users, we decided to use JWT tokens that has a email payload, then subsequently API calls will check the DB if the email exist, and what are the roles. Password is hashed with bcrypt so that it cannot easily be decrypted. The JWT token expires in every 1 minute currently so that even if the JWT get stolen, it would have expired and unusable. 
+
+Different API calls require different roles as well to provide a role-based authentication. The credit API calls would require you to be a partner, and then we will automatically select their partner_code so that they cannot change their partner code. The current roles that are being used is **admin** and **partner**, where an admin can add loyalty programmes, users and promotions. The partner would be able to use the credit functions and getting promotions in addition of getting loyalty programme.
 <img width="733" alt="image" src="https://github.com/user-attachments/assets/e4466617-7637-4cd3-b8ae-07f3bab25909">
 
 ## Loyalty Points Marketplace (Project description)
