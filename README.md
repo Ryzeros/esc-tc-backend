@@ -18,9 +18,7 @@ After the condition check, we will then evaluate the points in **points_rule**. 
 To ensure that the people using the API are authentic users, we decided to use JWT tokens that has a email payload, then subsequently API calls will check the DB if the email exist, and what are the roles. Different API calls require different roles as well to provide a role-based authentication. The credit API calls would require you to be a partner, and then we will automatically select their partner_code so that they cannot randomly change their partner code. Password is hashed with bcrypt so that it cannot easily be decrypted. The JWT token expires in every 1 minute currently so that even if the JWT get stolen, it would have expired and unusable. 
 <img width="733" alt="image" src="https://github.com/user-attachments/assets/e4466617-7637-4cd3-b8ae-07f3bab25909">
 
-
-
-## Loyalty Points Marketplace
+## Loyalty Points Marketplace (Project description)
 There are 3 parties at play here; for which you’ll build 2 apps only:
 1. The Bank app
 2. The TransferConnect app (where the core logic of points processing exists). 
